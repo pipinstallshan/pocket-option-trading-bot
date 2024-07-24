@@ -1,0 +1,13 @@
+[
+    {
+        "tradeId": "7f7750ac223568382e378752bd5504892ee5678e65ab2935285588342596042f",
+        "messageId": "message127",
+        "currencyPair": "USD/CAD",
+        "action": "PUT",
+        "tradeExecution": "09:03",
+        "galeOne": "09:04",
+        "galeTwo": "09:04",
+        "tradeExpiration": "09:05",
+        "localTime": "17:02"
+    }
+]

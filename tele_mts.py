@@ -1,0 +1,155 @@
+import os
+import re
+import time
+import json
+import hashlib
+import logging
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from logging.handlers import RotatingFileHandler
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+
+handler = RotatingFileHandler(
+    './logs/TELEGRAM_MAGIC_TRADER.log', 
+    maxBytes=1 * 1024 * 1024 * 1024,
+    backupCount=0 
+)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+handler.setLevel(logging.INFO)
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
+
+class TelegramBot:
+    driver = None
+    group_ids = set()
+    group_signals = []
+    
+    def __init__(self):
+        self.load_web_driver()
+        self.wait = WebDriverWait(self.driver, 10)
+        print("Connect to VPN")
+        
+    def load_web_driver(self):
+        options = Options()
+        options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+        options.add_argument('--ignore-ssl-errors')
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--ignore-certificate-errors-spki-list')
+        options.add_argument(r'--user-data-dir=/Users/hp/Library/Application Support/Google/Chrome/Default')
+        service = Service(executable_path=r'./bin/chromedriver.exe')
+        self.driver = webdriver.Chrome(options=options, service=service)
+        url = "https://web.telegram.org/a"
+        self.driver.get(url)
+    
+    def click_on_group(self, group_to_target):
+        try:
+            self.wait.until(EC.presence_of_element_located((By.XPATH, f'//h3[contains(text(), "{group_to_target}")]/ancestor::a')))    
+            group_name = self.driver.find_element(By.XPATH, f'//h3[contains(text(), "{group_to_target}")]/ancestor::a')
+            group_name.click()
+        except Exception as e:
+            logging.exception(f"Exception func click_on_group : {e}")
+            self.click_on_group(group_to_target)
+        
+    def get_messages(self):
+        try:
+            try:
+                scroll_down_button = self.driver.find_element(By.XPATH, '//button[@aria-label="Go to bottom"]')
+                if scroll_down_button:
+                    self.driver.execute_script("arguments[0].click();", scroll_down_button)
+            except:
+                pass
+            
+            self.wait.until(EC.presence_of_element_located((By.XPATH, '(//div[contains(@id, "message")])[position() = last()]//div[@class="text-content clearfix with-meta"]')))
+            message = self.driver.find_element(By.XPATH, '(//div[contains(@id, "message")])[position() = last()]//div[@class="text-content clearfix with-meta"]')
+            html_content = message.get_attribute('innerHTML')
+            soup = BeautifulSoup(html_content, 'html.parser')
+            try:
+                texts = soup.find_all(string=True)
+                final_text = ""
+                for text in texts:
+                    if text.strip():
+                        final_text += text.strip() + " "
+                message_id = self.driver.find_element(By.XPATH, '(//div[contains(@id, "message")])[position() = last()]').get_attribute('id')
+                    
+                if message_id not in self.group_ids:
+                    self.group_ids.add(message_id)
+                    self.wait.until(EC.presence_of_element_located((By.XPATH, '(//div[contains(@id, "message")])[position() = last()]//div[@class="text-content clearfix with-meta"]')))
+                    local_time = self.driver.find_element(By.XPATH, '(//span[@class="message-time"])[position() = last()]').text.strip()
+                    match = re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE —>TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text)
+                    if match:
+                        trade_id = hashlib.sha256(",".join([
+                            match.group("currencyPair"),
+                            match.group("action"),
+                            match.group("galeOne"),
+                            match.group("tradeExecution")
+                        ]).encode()).hexdigest()
+                        
+                        trade_info = {
+                            "tradeId": trade_id,
+                            "messageId": message_id,
+                            "currencyPair": match.group("currencyPair"),
+                            "action": match.group("action"),
+                            "tradeExecution": match.group("tradeExecution"),
+                            "galeOne": match.group("galeOne"),
+                            "galeTwo": match.group("galeTwo"),
+                            "tradeExpiration": match.group("tradeExpiration"),
+                            "localTime": local_time.replace("PM", "").replace("AM", "").strip()
+                        }
+                        print(f"\nSignal : {trade_info}")
+                        logging.info(f"\nSignal : {trade_info}")
+                        self.group_signals.append(trade_info)
+                        self.save2json()
+            except Exception as e:
+                logging.exception(f"get_messages func: Error while getting text from message: {e}")
+        except Exception as e:
+            logging.exception(f"get_messages func: Error while getting message: {e}")
+
+    def restart_driver(self):
+        self.driver.quit()
+        self.load_web_driver()
+        self.wait = WebDriverWait(self.driver, 10)
+    
+    def save2json(self):
+        with open("./jsons/signals_mts.json", 'w', encoding='utf-8') as file:
+            json.dump(self.group_signals, file, indent=4, ensure_ascii=False)
+    
+    def main(self):
+        group_to_target = "Magic Trader Signals"
+        try:
+            self.click_on_group(group_to_target)
+            print(f"Group enter successful")
+            os.system("cls")
+            print("TELEGRAM BOT LIVE...\n")
+        except Exception as e:
+            logging.exception(f"main func: Error while opening group: {e}")
+            exit()
+
+        start_time = time.time()
+        while True:
+            self.get_messages()
+            time.sleep(1)
+            if time.time() - start_time > 300:
+                print(f"\nRestarting driver...")
+                self.restart_driver()
+                try:
+                    self.click_on_group(group_to_target)
+                    print(f"Group re-enter successful")
+                    os.system("cls")
+                    print("TELEGRAM BOT LIVE...\n")
+                except Exception as e:
+                    print(f"Error while reopening group: {e}")
+                    exit()
+                start_time = time.time()
+            
+if __name__ == '__main__':
+    bot = TelegramBot()
+    bot.main()

@@ -1,0 +1,90 @@
+[
+    {
+        "tradeId": "0db92a02ed7a6344dd46f74f0f26919f22ea2c254b88377fe61747283459ef51",
+        "messageId": "message28377",
+        "currencyPair": "USD/BRL",
+        "action": "PUT",
+        "tradeExecution": "00:40",
+        "galeOne": "00:45",
+        "galeTwo": "00:50",
+        "tradeExpiration": "00:55",
+        "localTime": "08:37"
+    },
+    {
+        "tradeId": "cfe0afdbe9575466f05fc4b37bdbbe25a20340e96f1b7189e494ed31328014d4",
+        "messageId": "message28380",
+        "currencyPair": "USD/COP",
+        "action": "PUT",
+        "tradeExecution": "01:10",
+        "galeOne": "01:15",
+        "galeTwo": "01:20",
+        "tradeExpiration": "01:25",
+        "localTime": "09:08"
+    },
+    {
+        "tradeId": "fd21c64f9b18947e400d133090e1e4c574c8d57ac87d09c1a0ebfd7f2c22202c",
+        "messageId": "message28383",
+        "currencyPair": "USD/COP",
+        "action": "PUT",
+        "tradeExecution": "01:25",
+        "galeOne": "01:30",
+        "galeTwo": "01:35",
+        "tradeExpiration": "01:40",
+        "localTime": "09:22"
+    },
+    {
+        "tradeId": "fd21c64f9b18947e400d133090e1e4c574c8d57ac87d09c1a0ebfd7f2c22202c",
+        "messageId": "message28384",
+        "currencyPair": "USD/COP",
+        "action": "PUT",
+        "tradeExecution": "01:25",
+        "galeOne": "01:30",
+        "galeTwo": "01:35",
+        "tradeExpiration": "01:40",
+        "localTime": "09:32"
+    },
+    {
+        "tradeId": "774c360216b9b47ce803e191b5fed02cc5c80494d837fb4ee1360b854d7a135d",
+        "messageId": "message28387",
+        "currencyPair": "USD/COP",
+        "action": "PUT",
+        "tradeExecution": "01:35",
+        "galeOne": "01:40",
+        "galeTwo": "01:45",
+        "tradeExpiration": "01:50",
+        "localTime": "09:33"
+    },
+    {
+        "tradeId": "8a8269abf218c864ba120059efc9a3bfefc9f0804afd6676f741aaed88542a9a",
+        "messageId": "message28389",
+        "currencyPair": "EUR/USD",
+        "action": "PUT",
+        "tradeExecution": "01:55",
+        "galeOne": "02:00",
+        "galeTwo": "02:05",
+        "tradeExpiration": "02:10",
+        "localTime": "09:53"
+    },
+    {
+        "tradeId": "810ea89ee81996b8d43704b996348b8c867d9686efbf17899d85252744eff450",
+        "messageId": "message28394",
+        "currencyPair": "USD/BRL",
+        "action": "PUT",
+        "tradeExecution": "02:25",
+        "galeOne": "02:30",
+        "galeTwo": "02:35",
+        "tradeExpiration": "02:40",
+        "localTime": "10:22"
+    },
+    {
+        "tradeId": "9ae129bcad96f4b535be9575f5176b5e55530a0a7d9c360f1c36668dc7674381",
+        "messageId": "message28397",
+        "currencyPair": "USD/BRL",
+        "action": "PUT",
+        "tradeExecution": "02:50",
+        "galeOne": "02:55",
+        "galeTwo": "03:00",
+        "tradeExpiration": "03:05",
+        "localTime": "10:48"
+    }
+]
