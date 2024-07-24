@@ -33,9 +33,9 @@ This bot is provided for informational purposes only. It is not a financial advi
 
 Contributions to this project are welcome! You can contribute by:
 
-`Reporting issues`: If you encounter any bugs or issues, please report them on the GitHub issue tracker.
-`Submitting pull requests`: If you have any improvements or new features, feel free to submit a pull request.
-`Providing feedback`: Your feedback is valuable and helps improve the project.
+`Reporting issues`: If you encounter any bugs or issues, please report them on the GitHub issue tracker.<br></br>
+`Submitting pull requests`: If you have any improvements or new features, feel free to submit a pull request.<br></br>
+`Providing feedback`: Your feedback is valuable and helps improve the project.<br></br>
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
