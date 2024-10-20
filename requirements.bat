@@ -1,0 +1,1 @@
+pip install pytz==2023.3 pyyaml selenium webdriver_manager re bs4 psutil

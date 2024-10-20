@@ -2,8 +2,10 @@ import os
 import re
 import time
 import json
+import random
 import hashlib
 import logging
+from pathlib import Path
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -11,6 +13,7 @@ from logging.handlers import RotatingFileHandler
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 
 
@@ -34,18 +37,22 @@ class TelegramBot:
     group_signals = []
     
     def __init__(self):
+        print("Connect to a VPN, timeout in 30s!")
         self.load_web_driver()
         self.wait = WebDriverWait(self.driver, 10)
-        print("Connect to VPN")
-        
+        time.sleep(30)
+        print("Timeout!")
+        time.sleep(3)
+
     def load_web_driver(self):
         options = Options()
+        options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--ignore-certificate-errors-spki-list')
-        options.add_argument(r'--user-data-dir=/Users/hp/Library/Application Support/Google/Chrome/Default')
-        service = Service(executable_path=r'./bin/chromedriver.exe')
+        options.add_argument(f'--user-data-dir={os.path.join(str(Path.home()), "AppData", "Local", "Google", "Chrome", "User Data", "Telegram")}')
+        service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(options=options, service=service)
         url = "https://web.telegram.org/a"
         self.driver.get(url)
@@ -62,14 +69,14 @@ class TelegramBot:
     def get_messages(self):
         try:
             try:
-                scroll_down_button = self.driver.find_element(By.XPATH, '//button[@aria-label="Go to bottom"]')
+                scroll_down_button = self.driver.find_element(By.XPATH, '//div[@class="VWoOZCD5 iozW83la wDwOdyQH"]//button[@aria-label="Go to bottom"]')
                 if scroll_down_button:
-                    self.driver.execute_script("arguments[0].click();", scroll_down_button)
+                    scroll_down_button.click()
             except:
                 pass
             
-            self.wait.until(EC.presence_of_element_located((By.XPATH, '(//div[contains(@id, "message")])[position() = last()]//div[@class="text-content clearfix with-meta"]')))
-            message = self.driver.find_element(By.XPATH, '(//div[contains(@id, "message")])[position() = last()]//div[@class="text-content clearfix with-meta"]')
+            self.wait.until(EC.presence_of_element_located((By.XPATH, '(//div[@class="bottom-marker"])[position() = last()]/parent::div[contains(@id, "message")]')))
+            message = self.driver.find_element(By.XPATH, '(//div[@class="bottom-marker"])[position() = last()]/parent::div[contains(@id, "message")]')
             html_content = message.get_attribute('innerHTML')
             soup = BeautifulSoup(html_content, 'html.parser')
             try:
@@ -78,11 +85,11 @@ class TelegramBot:
                 for text in texts:
                     if text.strip():
                         final_text += text.strip() + " "
-                message_id = self.driver.find_element(By.XPATH, '(//div[contains(@id, "message")])[position() = last()]').get_attribute('id')
+                message_id = message.get_attribute('id')
                     
                 if message_id not in self.group_ids:
                     self.group_ids.add(message_id)
-                    self.wait.until(EC.presence_of_element_located((By.XPATH, '(//div[contains(@id, "message")])[position() = last()]//div[@class="text-content clearfix with-meta"]')))
+                    self.wait.until(EC.presence_of_element_located((By.XPATH, '(//div[@class="bottom-marker"])[position() = last()]/parent::div[contains(@id, "message")]')))
                     local_time = self.driver.find_element(By.XPATH, '(//span[@class="message-time"])[position() = last()]').text.strip()
                     match = re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE —>TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text)
                     if match:
@@ -123,7 +130,7 @@ class TelegramBot:
             json.dump(self.group_signals, file, indent=4, ensure_ascii=False)
     
     def main(self):
-        group_to_target = "Magic Trader Signals"
+        group_to_target = "My Channel T"
         try:
             self.click_on_group(group_to_target)
             print(f"Group enter successful")
@@ -133,22 +140,27 @@ class TelegramBot:
             logging.exception(f"main func: Error while opening group: {e}")
             exit()
 
-        start_time = time.time()
+        # start_time = time.time()
         while True:
+            time.sleep(random.randint(1,2))
             self.get_messages()
-            time.sleep(1)
-            if time.time() - start_time > 300:
-                print(f"\nRestarting driver...")
-                self.restart_driver()
-                try:
-                    self.click_on_group(group_to_target)
-                    print(f"Group re-enter successful")
-                    os.system("cls")
-                    print("TELEGRAM BOT LIVE...\n")
-                except Exception as e:
-                    print(f"Error while reopening group: {e}")
-                    exit()
-                start_time = time.time()
+            
+            # I used this code to restart the so the process could refresh if it got stuck somewhere
+            # ***************************************************************************************
+            
+            # time.sleep(1)
+            # if time.time() - start_time > 300:
+            #     print(f"\nRestarting driver...")
+            #     self.restart_driver()
+            #     try:
+            #         self.click_on_group(group_to_target)
+            #         print(f"Group re-enter successful")
+            #         os.system("cls")
+            #         print("TELEGRAM BOT LIVE...\n")
+            #     except Exception as e:
+            #         print(f"Error while reopening group: {e}")
+            #         exit()
+            #     start_time = time.time()
             
 if __name__ == '__main__':
     bot = TelegramBot()

@@ -8,10 +8,11 @@ The project consists of the following files:
 - `main`: Runs the cronjob.
 - `cronjob_pocket.py`: Runs a cronjob that checks for time intervals and starts the `pocket_mts.py` script for trading.
 - `cronjob_tele.py`: Runs a cronjob that checks for time intervals and starts the `tele_mts.py` script for retrieving signals from Telegram.
+- `login_pocket.py`: You can login to Pocket Option using this Selenium based script.
+- `login_tele.py`: You can login to Telegram using this Selenium based script.
 - `pocket_mts.py`: Contains the core logic for the trading bot, including connecting to the Pocket Option website, executing trades based on signals, and managing trade results.
 - `tele_mts.py`: Contains the logic for connecting to the Telegram group, extracting signals, and saving them to a JSON file.
 - `jsons/signals_mts.json`: Stores the extracted signals from the Telegram group.
-- `bin/chromedriver.exe`: The ChromeDriver executable for Selenium use the latest ChromeDriver.
 - `logs/POCKET_MAGIC_TRADER_SIGNALS.log`: Log file for the Pocket Option bot.
 - `logs/TELEGRAM_MAGIC_TRADER.log`: Log file for the Telegram bot.
 
@@ -21,9 +22,7 @@ The project consists of the following files:
 - I have tested on Python 3.8.
 
 ### Dependencies
-- The following Python packages are required:
-  - `selenium`
-  - `pytz==2023.3`
+- I have created a requirements.bat file to install all the dependencies, run it and you'll be good to go.
 
 ## Usage
 
