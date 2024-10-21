@@ -2,6 +2,7 @@ import os
 import re
 import time
 import json
+import yaml
 import random
 import hashlib
 import logging
@@ -16,6 +17,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 
+with open('config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
+
+TELEGRAM_GROUP_NAME = config['TELEGRAM_GROUP_NAME']
 
 handler = RotatingFileHandler(
     './logs/TELEGRAM_MAGIC_TRADER.log', 
@@ -37,11 +42,8 @@ class TelegramBot:
     group_signals = []
     
     def __init__(self):
-        print("Connect to a VPN, timeout in 30s!")
         self.load_web_driver()
         self.wait = WebDriverWait(self.driver, 10)
-        time.sleep(30)
-        print("Timeout!")
         time.sleep(3)
 
     def load_web_driver(self):
@@ -69,7 +71,7 @@ class TelegramBot:
     def get_messages(self):
         try:
             try:
-                scroll_down_button = self.driver.find_element(By.XPATH, '//div[@class="VWoOZCD5 iozW83la wDwOdyQH"]//button[@aria-label="Go to bottom"]')
+                scroll_down_button = self.driver.find_element(By.XPATH, '//div[@class="Transition"]/following-sibling::div//button[@aria-label="Go to bottom"]')
                 if scroll_down_button:
                     scroll_down_button.click()
             except:
@@ -130,7 +132,7 @@ class TelegramBot:
             json.dump(self.group_signals, file, indent=4, ensure_ascii=False)
     
     def main(self):
-        group_to_target = "My Channel T"
+        group_to_target = TELEGRAM_GROUP_NAME
         try:
             self.click_on_group(group_to_target)
             print(f"Group enter successful")

@@ -113,8 +113,6 @@ class TradingBot:
                 if closed_trades_currencies:
                     last_split = closed_trades_currencies[0].text.split('\n')
                 try:
-                    # amount = self.driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                    # amount_value = int(amount.get_attribute('value'))
                     if '$0' not in last_split[4]:                                             # Win
                         print(f"🏆 Trade Win : {last_split[4]}\n")
                         return True
