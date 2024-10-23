@@ -31,5 +31,27 @@
         "galeTwo": "15:42",
         "tradeExpiration": "15:47",
         "localTime": "23:31"
+    },
+    {
+        "tradeId": "94d8fc9647c77408f873b8632a22fd2ed01ba305497498e4699025dba7f628a4",
+        "messageId": "28",
+        "currencyPair": "USD/CAD",
+        "action": "PUT",
+        "tradeExecution": "15:45",
+        "galeOne": "15:50",
+        "galeTwo": "15:55",
+        "tradeExpiration": "16:00",
+        "localTime": "23:43"
+    },
+    {
+        "tradeId": "e774af0cc1030d343748cf09819ace44ce10fb536ead6136777c3d8fb5f7de81",
+        "messageId": "29",
+        "currencyPair": "USD/JPY",
+        "action": "PUT",
+        "tradeExecution": "15:45",
+        "galeOne": "15:50",
+        "galeTwo": "15:55",
+        "tradeExpiration": "16:00",
+        "localTime": "23:44"
     }
 ]

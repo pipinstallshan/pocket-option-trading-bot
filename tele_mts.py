@@ -150,7 +150,7 @@ class TelegramBot:
             # ***************************************************************************************
             
             time.sleep(1)
-            if time.time() - start_time > 300:
+            if time.time() - start_time > random.randint(700, 900):
                 print(f"\nRestarting driver...")
                 self.restart_driver()
                 try:
