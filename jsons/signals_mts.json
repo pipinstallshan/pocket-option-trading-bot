@@ -1,46 +1,35 @@
 [
     {
-        "tradeId": "52d1ed3f4cc66b1d9364bbc11d7120f3378174138956f1e9dfbc00ef59c3dba3",
-        "messageId": "message-193",
-        "currencyPair": "USD/JPY",
-        "action": "CALL",
-        "tradeExecution": "12:45",
-        "galeOne": "12:46",
-        "galeTwo": "12:47",
-        "tradeExpiration": "12:48",
-        "localTime": "20:42"
+        "tradeId": "22cfa8712747d189e6b47780139ff4e08cce89582dcac934d775c0dd18420405",
+        "messageId": "25",
+        "currencyPair": "AUD/JPY",
+        "action": "PUT",
+        "tradeExecution": "20:30",
+        "galeOne": "20:35",
+        "galeTwo": "20:40",
+        "tradeExpiration": "20:45",
+        "localTime": "23:27"
     },
     {
-        "tradeId": "5ad3e204404b42c009a044562ff920ea3bc6f2a6cb57e59087a31eed294028a4",
-        "messageId": "message-194",
-        "currencyPair": "USD/JPY",
-        "action": "CALL",
-        "tradeExecution": "13:27",
-        "galeOne": "13:28",
-        "galeTwo": "13:29",
-        "tradeExpiration": "12:30",
-        "localTime": "21:25"
+        "tradeId": "22cfa8712747d189e6b47780139ff4e08cce89582dcac934d775c0dd18420405",
+        "messageId": "26",
+        "currencyPair": "AUD/JPY",
+        "action": "PUT",
+        "tradeExecution": "20:30",
+        "galeOne": "20:35",
+        "galeTwo": "20:40",
+        "tradeExpiration": "20:45",
+        "localTime": "23:30"
     },
     {
-        "tradeId": "70dfb2627e5e6ae5f01b684006cb2fdcaba0db1f92685bbc250d9efdb733e17f",
-        "messageId": "message-195",
-        "currencyPair": "USD/JPY",
-        "action": "CALL",
-        "tradeExecution": "13:42",
-        "galeOne": "13:43",
-        "galeTwo": "13:44",
-        "tradeExpiration": "12:45",
-        "localTime": "21:40"
-    },
-    {
-        "tradeId": "da6cd2a15aa9ef66e082943ede559cc7fe0af5221d6f70a7cd2aec1fa3c75fc8",
-        "messageId": "message-196",
-        "currencyPair": "USD/JPY",
-        "action": "CALL",
-        "tradeExecution": "13:44",
-        "galeOne": "13:45",
-        "galeTwo": "13:46",
-        "tradeExpiration": "12:47",
-        "localTime": "21:43"
+        "tradeId": "33175745e078888c86c6fc8813daab7aa7dc94b7eacc3f71c6472c8cd46c214e",
+        "messageId": "27",
+        "currencyPair": "AUD/JPY",
+        "action": "PUT",
+        "tradeExecution": "15:32",
+        "galeOne": "15:37",
+        "galeTwo": "15:42",
+        "tradeExpiration": "15:47",
+        "localTime": "23:31"
     }
 ]
