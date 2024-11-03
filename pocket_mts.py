@@ -22,6 +22,7 @@ with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 TRADE_EQUITY_PERCENT = config['TRADE_EQUITY_PERCENT']
+TRADING_ACCOUNT = config['ACCOUNT']
 
 handler = RotatingFileHandler(
     './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
@@ -260,7 +261,55 @@ class TradingBot:
         self.wait.until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(), "Currencies")]'))).click()
         self.driver.refresh()
         time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
-        
+        return
+            
+    def switch_real_or_demo(self):
+        if TRADING_ACCOUNT.lower() == "demo":
+            try:
+                self.driver.find_element(By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')
+                self.driver.get("https://pocketoption.com/en/cabinet/demo-quick-high-low/")
+                time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
+                demo_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')))
+                if demo_identifier:
+                    print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                    return
+                else:
+                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    exit(0)
+            except:
+                try:
+                    demo_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')))
+                    if demo_identifier:
+                        print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                        return
+                except:
+                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    exit(0)
+                    
+        elif TRADING_ACCOUNT.lower() == "real":
+            try:
+                self.driver.find_element(By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')
+                self.driver.get("https://pocketoption.com/en/cabinet/")
+                time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
+                real_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')))
+                if real_identifier:
+                    print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                    return
+                else:
+                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    exit(0)
+            except:
+                try:
+                    real_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')))
+                    if real_identifier:
+                        print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                        return
+                except:
+                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    exit(0)
+        else:
+            return
+    
     def restart_driver(self):
         self.driver.quit()
         self.load_web_driver()
@@ -269,7 +318,9 @@ class TradingBot:
     def main(self):
         print("POCKET BOT LIVE...\n")
         start_time = time.time()
+        self.switch_real_or_demo()
         self.switch_to_currencies()
+        print(f"⏳ Waiting for Telegram Signals\n")
         while True:
             time.sleep(random.randint(1,2))
             try:

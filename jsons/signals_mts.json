@@ -482,5 +482,27 @@
         "galeTwo": "14:23",
         "tradeExpiration": "14:24",
         "localTime": "22:19"
+    },
+    {
+        "tradeId": "2163f8d9bd011e005fe8383bcd8533939730e52cf2564e4dac7496984b42e068",
+        "messageId": "272",
+        "currencyPair": "USD/JPY",
+        "action": "CALL",
+        "tradeExecution": "16:12",
+        "galeOne": "16:13",
+        "galeTwo": "16:14",
+        "tradeExpiration": "16:15",
+        "localTime": "00:12"
+    },
+    {
+        "tradeId": "b6cb3e9e08352e636db15540cd4162c817ab6ee1ba6a7e6a3efa71b88b7beeb1",
+        "messageId": "273",
+        "currencyPair": "USD/JPY",
+        "action": "CALL",
+        "tradeExecution": "18:21",
+        "galeOne": "18:22",
+        "galeTwo": "18:23",
+        "tradeExpiration": "18:24",
+        "localTime": "01:20"
     }
 ]
