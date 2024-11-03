@@ -45,6 +45,7 @@ class TradingBot:
     wait = None
     driver = None
     TRADES_EXECUTED_ID = set()
+    CURRENT_TRADE_AMOUNT = ""
 
     def __init__(self):
         self.load_web_driver()
@@ -55,7 +56,7 @@ class TradingBot:
         
     def load_web_driver(self):
         options = Options()
-        options.add_argument('--headless=new')
+        # options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -73,7 +74,7 @@ class TradingBot:
             is_weekend = current_day >= 5
             current_symbol = self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol')))
             current_symbol.click()
-            time.sleep(2)
+            time.sleep(random.choice([1.5, 1.8, 1.6, 1.7]))
             if is_weekend:
                 currency = self.driver.find_element(By.XPATH, f"//li[contains(., '{self.CURRENCY}')]//span[@class='alist__label'][contains(text(), 'OTC')]/parent::a")
             else:
@@ -81,13 +82,16 @@ class TradingBot:
             if currency:
                 currency_text = currency.text.strip()
                 if currency_text != self.CURRENCY:
-                    time.sleep(2)
+                    time.sleep(random.choice([1.5, 1.8, 1.6, 1.7]))
                     currency.location_once_scrolled_into_view
-                    time.sleep(2)
+                    time.sleep(random.choice([1.5, 1.8, 1.6, 1.7]))
                     currency.click()
-            time.sleep(2)
+                    time.sleep(random.choice([1.5, 1.8, 1.6, 1.7]))
+                    
             self.driver.refresh()
+            time.sleep(random.choice([2.5, 2.8, 2.6, 2.7]))
             return True
+        
         except TimeoutException as e:
             logging.error(f"Timeout during currency change: {e}")
             return False
@@ -126,211 +130,100 @@ class TradingBot:
                     print(f"Exception func check_trade_result : {e}")
                 break
     
-    def set_trade_amount(self, trade_amount):
-        amount_element = self.driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-        amount_element.clear()
-        amount_element.send_keys("0")
-        time.sleep(random.choice([0.8, 0.9, 1.0, 1.1]))
-        amount_element.send_keys(str(trade_amount))
-        print(f"Trade amount set to ${trade_amount}")
-        return
+    def get_balance(self):
+        return int(float(self.driver.find_element(By.XPATH, '//header//span[contains(@class, "js-balance")]').text.replace(",", "").strip()))
     
-    def execute_trade(self, trade_info):
-        if self.TRADE_RECORD == 0:
-            start_time = time.time()
-            while True:
-                time.sleep(0.3)
-                utc_now = datetime.utcnow()
-                utc_minus_3 = utc_now - timedelta(hours=3)
-                print(f"⏳ Waiting for execution [ CURRENT TIME : {utc_minus_3.strftime('%H:%M:%S')} ] [ INITIAL TRADE ] : ", trade_info, "\n")
-                try:
-                    if utc_minus_3.strftime('%H:%M') == trade_info['tradeExecution']:
-                        total_balance = int(float((self.driver.find_element(By.XPATH, '//header//span[contains(@class, "js-balance")]').text).strip()))
-                        twoPercent = max(1, math.floor(total_balance * float(f"{0.0}{TRADE_EQUITY_PERCENT}")))
-                        self.set_trade_amount(twoPercent)
-                        self.ACTION = trade_info['action'].lower()
-                        break
-                    elif datetime.strptime(utc_minus_3.strftime('%H:%M'), "%H:%M") > datetime.strptime(trade_info['tradeExecution'], "%H:%M"):
-                        print(f"⏳ Execution Time Exceeded --> GALE 1 [ CURRENT TIME : {utc_minus_3.strftime('%H:%M:%S')} ] [ INITIAL TRADE ] : ", trade_info, "\n")
-                        self.TRADE_RECORD = 1
-                        self.execute_trade(trade_info)
-                        
-                    elapsed_time = time.time() - start_time
-                    if elapsed_time > 300:
-                        return
-                    
-                except NoSuchElementException as e:
-                    logging.error(f"Element not found func execute_trade while loop Initial: {e}")
-                except TimeoutException as e:
-                    logging.error(f"Timeout during trade execution func execute_trade while loop Initial: {e}")
-                except Exception as e:
-                    logging.exception(f"Error during trade execution func execute_trade while loop Initial: {e}")
-                
-            try:
-                if self.ACTION == "buy" or self.ACTION == "call":
-                    self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-call')))
-                    buy_button = self.driver.find_element(By.CLASS_NAME, 'btn-call')
-                    buy_button.click()
-                    print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                elif self.ACTION == "sell" or self.ACTION == "put":
-                    self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-put')))
-                    sell_button = self.driver.find_element(By.CLASS_NAME, 'btn-put')
-                    sell_button.click()
-                    print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                print("Trade Executed : ", trade_info, "\n")
-                
-                amount = self.driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                bool_check_result = self.check_trade_result()
-                if bool_check_result == True:
-                    self.TRADE_RECORD = 0
-                    return
-                else:
-                    self.TRADE_RECORD = 1
-                    amount.click()
-                    time.sleep(random.choice([0.8, 0.9, 1.0, 1.1]))
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()-1]').click()
-                    time.sleep(random.choice([0.8, 0.9, 1.0, 1.1]))
-                    self.execute_trade(trade_info)
-                
-            except NoSuchElementException as e:
-                logging.error(f"Element not found func execute_trade Initial: {e}")
-            except TimeoutException as e:
-                logging.error(f"Timeout during trade execution func execute_trade Initial: {e}")
-            except Exception as e:
-                logging.exception(f"Error during trade execution func execute_trade Initial: {e}")
-                
-        elif self.TRADE_RECORD == 1:
-            start_time = time.time()
-            while True:
-                time.sleep(0.2)
-                utc_now = datetime.utcnow()
-                utc_minus_3 = utc_now - timedelta(hours=3)
-                print(f"⏳ Waiting for execution [ CURRENT TIME : {utc_minus_3.strftime('%H:%M:%S')} ] [ GALE 1 ] : ", trade_info, "\n")
-                try:
-                    if utc_minus_3.strftime('%H:%M') == trade_info['galeOne']:
-                        self.ACTION = trade_info['action'].lower()
-                        break
-                    elif datetime.strptime(utc_minus_3.strftime('%H:%M'), "%H:%M") > datetime.strptime(trade_info['galeOne'], "%H:%M"):
-                        print(f"⏳ Execution Time Exceeded --> GALE 2 [ CURRENT TIME : {utc_minus_3.strftime('%H:%M:%S')} ] [ GALE 1 ] : ", trade_info, "\n")
-                        self.TRADE_RECORD = 2
-                        self.execute_trade(trade_info)
+    def set_trade_amount(self, trade_amount):
+        self.driver.find_element(By.CSS_SELECTOR, '#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]').click()
+        time.sleep(random.choice([0.5, 0.4, 0.3, 0.6]))
+        
+        for __ in range(0, 5):
+            self.driver.find_element(By.XPATH, '//div[@class="virtual-keyboard__col"][position() = last()]').click()
+        
+        for digit in str(trade_amount):
+            time.sleep(random.choice([0.1, 0.2, 0.3]))
+            self.driver.find_element(By.XPATH, f'//div[@class="virtual-keyboard__col"]//div[@class="virtual-keyboard__input"][contains(text(), "{digit}")]').click()
+        
+        time.sleep(random.choice([0.9, 0.8, 0.6, 0.7]))
+        print(f"💲 Trade amount set to ${str(trade_amount).strip()}\n")
+        return trade_amount
+    
+    def wait_until_trade_time(self, trade_time):
+        start_time = time.time()
+        while True:
+            time.sleep(0.2)
+            current_time = (datetime.utcnow() - timedelta(hours=3)).strftime('%H:%M')
+            print(f"⏳ Waiting for execution [CURRENT TIME: {current_time}] [TARGET TIME: {trade_time}]\n")
+            
+            if current_time == trade_time:
+                return True
+            elif datetime.strptime(current_time, "%H:%M") > datetime.strptime(trade_time, "%H:%M"):
+                return False
 
-                    elapsed_time = time.time() - start_time
-                    if elapsed_time > 300:
-                        return
-                    
-                except NoSuchElementException as e:
-                    logging.error(f"Element not found func execute_trade while loop GALE 1: {e}")
-                except TimeoutException as e:
-                    logging.error(f"Timeout during trade execution func execute_trade while loop GALE 1: {e}")
-                except Exception as e:
-                    logging.exception(f"Error during trade execution func execute_trade while loop GALE 1: {e}")
+            if time.time() - start_time > 300:
+                return None
+
+    def execute_trade_action(self):
+        try:
+            if self.ACTION == "buy" or "call":
+                self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-call')))
+                self.driver.find_element(By.CLASS_NAME, 'btn-call').click()
+                print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            elif self.ACTION == "sell" or "put":
+                self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-put')))
+                self.driver.find_element(By.CLASS_NAME, 'btn-put').click()
+                print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        
+        except NoSuchElementException as e:
+            logging.error(f"Element not found during trade execution: {e}")
+        except TimeoutException as e:
+            logging.error(f"Timeout during trade execution: {e}")
+
+    def handle_trade_result(self):
+        try:
+            trade_success = self.check_trade_result()
+            if trade_success:
+                self.TRADE_RECORD = 0
+                print("✅ Trade succeeded.\n")
+                return True
+            else:
+                if self.TRADE_RECORD <= 2:
+                    self.TRADE_RECORD += 1
+                    print(f"❌ Trade failed. Attempting Martingale strategy - Record: {self.TRADE_RECORD}\n")
+                    self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(self.CURRENT_TRADE_AMOUNT * 2)
+                return False
+        
+        except NoSuchElementException as e:
+            logging.error(f"Element not found while handling trade result: {e}")
+        except TimeoutException as e:
+            logging.error(f"Timeout during handling trade result: {e}")
+        return None
+
+    def execute_trade(self, trade_info):
+        time_field = ['tradeExecution', 'galeOne', 'galeTwo'][self.TRADE_RECORD]
+        trade_time = trade_info.get(time_field)
+
+        if trade_time:
+            if self.wait_until_trade_time(trade_time) is not None:
+                self.ACTION = trade_info['action'].lower()
                 
-            try:
-                if self.ACTION == "buy" or self.ACTION == "call":
-                    self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-call')))
-                    buy_button = self.driver.find_element(By.CLASS_NAME, 'btn-call')
-                    buy_button.click()
-                    print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                elif self.ACTION == "sell" or self.ACTION == "put":
-                    self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-put')))
-                    sell_button = self.driver.find_element(By.CLASS_NAME, 'btn-put')
-                    sell_button.click()
-                    print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                print("Trade Executed : ", trade_info, "\n")
+                initial_trade_amount = max(1, math.floor(int(self.get_balance()) * float(f"{0.0}{TRADE_EQUITY_PERCENT}")))
+                if self.TRADE_RECORD == 0:
+                    self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(initial_trade_amount)
                 
-                amount = self.driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                bool_check_result = self.check_trade_result()
-                if bool_check_result == True:
-                    self.TRADE_RECORD = 0
-                    amount = self.driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                    amount.click()
-                    time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()]').click()
-                    time.sleep(2)
-                    return
-                else:
-                    self.TRADE_RECORD = 2
-                    amount.click()
-                    time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()-1]').click()
-                    time.sleep(2)
-                    self.execute_trade(trade_info)
-                        
-            except NoSuchElementException as e:
-                logging.error(f"Element not found func execute_trade [ Gale 1 ] : {e}")
-            except TimeoutException as e:
-                logging.error(f"Timeout during trade execution func execute_trade [ Gale 1 ] : {e}")
-            except Exception as e:
-                logging.exception(f"Error during trade execution func execute_trade [ Gale 1 ] : {e}")
+                self.execute_trade_action()
                 
-        elif self.TRADE_RECORD == 2:
-            start_time = time.time()
-            while True:
-                time.sleep(0.2)
-                utc_now = datetime.utcnow()
-                utc_minus_3 = utc_now - timedelta(hours=3)
-                print(f"⏳ Waiting for execution [ CURRENT TIME : {utc_minus_3.strftime('%H:%M:%S')} ] [ GALE 2 ] : ", trade_info, "\n")
-                try:
-                    if utc_minus_3.strftime('%H:%M') == trade_info['galeTwo']:
-                        self.ACTION = trade_info['action'].lower()
-                        break
-                    elif datetime.strptime(utc_minus_3.strftime('%H:%M'), "%H:%M") > datetime.strptime(trade_info['galeTwo'], "%H:%M"):
-                        print(f"⏳ Execution Time Exceeded --> Returning [ CURRENT TIME : {utc_minus_3.strftime('%H:%M:%S')} ] [ GALE 2 ] : ", trade_info, "\n")
+                if self.handle_trade_result() is False:
+                    if self.TRADE_RECORD <= 2:
+                        print(f"🔄 Retrying trade with doubled amount. Attempt: {self.TRADE_RECORD}\n")
+                        self.execute_trade(trade_info)
+                    else:
+                        print("⚠️ Maximum retries reached.\n")
                         self.TRADE_RECORD = 0
                         return
-
-                    elapsed_time = time.time() - start_time
-                    if elapsed_time > 300:
-                        return
-                except NoSuchElementException as e:
-                    logging.error(f"Element not found func execute_trade while loop GALE 2: {e}")
-                except TimeoutException as e:
-                    logging.error(f"Timeout during trade execution func execute_trade while loop GALE 2: {e}")
-                except Exception as e:
-                    logging.exception(f"Error during trade execution func execute_trade while loop GALE 2: {e}")
-                
-            try:
-                if self.ACTION == "buy" or self.ACTION == "call":
-                    self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-call')))
-                    buy_button = self.driver.find_element(By.CLASS_NAME, 'btn-call')
-                    buy_button.click()
-                    print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                elif self.ACTION == "sell" or self.ACTION == "put":
-                    self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-put')))
-                    sell_button = self.driver.find_element(By.CLASS_NAME, 'btn-put')
-                    sell_button.click()
-                    print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                print("Trade Executed : ", trade_info, "\n")
-                
-                amount = self.driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                bool_check_result = self.check_trade_result()
-                if bool_check_result == True:
-                    self.TRADE_RECORD = 0
-                    amount.click()
-                    time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()]').click()
-                    time.sleep(2)
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()]').click()
-                    time.sleep(2)
-                    return
                 else:
-                    self.TRADE_RECORD = 0
-                    amount.click()
-                    time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()]').click()
-                    time.sleep(2)
-                    self.driver.find_element(By.XPATH, '(//div[@class="multiply__btn"])[position() = last()]').click()
-                    time.sleep(2)
-                    return
-                        
-            except NoSuchElementException as e:
-                logging.error(f"Element not found func execute_trade [ Gale 2 ] : {e}")
-            except TimeoutException as e:
-                logging.error(f"Timeout during trade execution func execute_trade [ Gale 2 ] : {e}")
-            except Exception as e:
-                logging.exception(f"Error during trade execution func execute_trade [ Gale 2 ] : {e}")
-
+                    print("✅ Trade executed successfully and handled:", trade_info, "\n")
+                    
     def execute_trade_from_signal(self, trade_info):
         self.CURRENCY = trade_info["currencyPair"]
         local_trade_time = trade_info["localTime"]
@@ -343,22 +236,31 @@ class TradingBot:
             print("Signal Recieved : ", trade_info, "\n")
             
             if self.CURRENCY == current_symbol.text:
-                time.sleep(5)
+                time.sleep(2)
                 print(f"Same currency : {self.CURRENCY}\n")
                 self.execute_trade(trade_info)
+                return
                 
             if self.CURRENCY != current_symbol.text:
                 print(f"Changing currency : {current_symbol.text} --> {self.CURRENCY}\n")
                 state_currency = self.change_currency()
                 if state_currency == True:
                     print(f"Currency changed : {self.CURRENCY}\n")
-                    time.sleep(5)
+                    time.sleep(2)
                     self.execute_trade(trade_info)
+                    return
                 else:
                     print(f"Currency not found : {self.CURRENCY}\n")
-                    time.sleep(5)
+                    time.sleep(2)
                     return
     
+    def switch_to_currencies(self):
+        self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol'))).click()
+        time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(), "Currencies")]'))).click()
+        self.driver.refresh()
+        time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
+        
     def restart_driver(self):
         self.driver.quit()
         self.load_web_driver()
@@ -367,6 +269,7 @@ class TradingBot:
     def main(self):
         print("POCKET BOT LIVE...\n")
         start_time = time.time()
+        self.switch_to_currencies()
         while True:
             time.sleep(random.randint(1,2))
             try:
@@ -384,6 +287,7 @@ class TradingBot:
                     start_time = time.time()
                     os.system('cls')
                     print("POCKET BOT LIVE...\n")
+                    self.switch_to_currencies()
                     
             except NoSuchElementException as e:
                 logging.error(f"Element not found main : {e}")

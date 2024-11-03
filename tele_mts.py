@@ -146,7 +146,7 @@ class TelegramBot:
             time.sleep(random.randint(1,2))
             self.get_messages()
             
-            # I used this code to restart the so the process could refresh if it got stuck somewhere
+            # I use this code to restart so that the process could refresh if it got stuck somewhere
             # ***************************************************************************************
             
             time.sleep(1)
