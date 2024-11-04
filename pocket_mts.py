@@ -47,12 +47,16 @@ class TradingBot:
     driver = None
     TRADES_EXECUTED_ID = set()
     CURRENT_TRADE_AMOUNT = ""
-
+    
+    def log_and_print(self, message):
+        logger.info(message)
+        print(message)
+    
     def __init__(self):
         self.load_web_driver()
         self.wait = WebDriverWait(self.driver, 10)
         time.sleep(5)
-        print("Page load timeout")
+        self.log_and_print("Page load timeout")
         os.system('cls')
         
     def load_web_driver(self):
@@ -119,16 +123,16 @@ class TradingBot:
                     last_split = closed_trades_currencies[0].text.split('\n')
                 try:
                     if '$0' not in last_split[4]:                                             # Win
-                        print(f"🏆 Trade Win : {last_split[4]}\n")
+                        self.log_and_print(f"🏆 Trade Win : {last_split[4]}\n")
                         return True
                     elif '$0' not in last_split[3]:                                           # Draw
-                        print(f"🆗 Trade Draw : {last_split[3]}\n")
+                        self.log_and_print(f"🆗 Trade Draw : {last_split[3]}\n")
                         return True
                     else:                                                                       # Lose
-                        print(f"❌ Trade Lost : {last_split[4]}\n")
+                        self.log_and_print(f"❌ Trade Lost : {last_split[4]}\n")
                         return False
                 except Exception as e:
-                    print(f"Exception func check_trade_result : {e}")
+                    self.log_and_print(f"Exception func check_trade_result : {e}")
                 break
     
     def get_balance(self):
@@ -146,7 +150,7 @@ class TradingBot:
             self.driver.find_element(By.XPATH, f'//div[@class="virtual-keyboard__col"]//div[@class="virtual-keyboard__input"][contains(text(), "{digit}")]').click()
         
         time.sleep(random.choice([0.9, 0.8, 0.6, 0.7]))
-        print(f"💲 Trade amount set to ${str(trade_amount).strip()}\n")
+        self.log_and_print(f"💲 Trade amount set to ${str(trade_amount).strip()}\n")
         return trade_amount
     
     def wait_until_trade_time(self, trade_time):
@@ -154,7 +158,7 @@ class TradingBot:
         while True:
             time.sleep(0.2)
             current_time = (datetime.utcnow() - timedelta(hours=3)).strftime('%H:%M')
-            print(f"⏳ Waiting for execution [CURRENT TIME: {current_time}] [TARGET TIME: {trade_time}]\n")
+            self.log_and_print(f"⏳ Waiting for execution [CURRENT TIME: {current_time}] [TARGET TIME: {trade_time}]\n")
             
             if current_time == trade_time:
                 return True
@@ -169,11 +173,11 @@ class TradingBot:
             if self.ACTION == "buy" or "call":
                 self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-call')))
                 self.driver.find_element(By.CLASS_NAME, 'btn-call').click()
-                print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                self.log_and_print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             elif self.ACTION == "sell" or "put":
                 self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-put')))
                 self.driver.find_element(By.CLASS_NAME, 'btn-put').click()
-                print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                self.log_and_print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         except NoSuchElementException as e:
             logging.error(f"Element not found during trade execution: {e}")
@@ -185,12 +189,12 @@ class TradingBot:
             trade_success = self.check_trade_result()
             if trade_success:
                 self.TRADE_RECORD = 0
-                print("✅ Trade succeeded.\n")
+                self.log_and_print("✅ Trade succeeded.\n")
                 return True
             else:
                 if self.TRADE_RECORD <= 2:
                     self.TRADE_RECORD += 1
-                    print(f"❌ Trade failed. Attempting Martingale strategy - Record: {self.TRADE_RECORD}\n")
+                    self.log_and_print(f"❌ Trade failed. Attempting Martingale strategy - Record: {self.TRADE_RECORD}\n")
                     self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(self.CURRENT_TRADE_AMOUNT * 2)
                 return False
         
@@ -216,14 +220,14 @@ class TradingBot:
                 
                 if self.handle_trade_result() is False:
                     if self.TRADE_RECORD <= 2:
-                        print(f"🔄 Retrying trade with doubled amount. Attempt: {self.TRADE_RECORD}\n")
+                        self.log_and_print(f"🔄 Retrying trade with doubled amount. Attempt: {self.TRADE_RECORD}\n")
                         self.execute_trade(trade_info)
                     else:
-                        print("⚠️ Maximum retries reached.\n")
+                        self.log_and_print("⚠️ Maximum retries reached.\n")
                         self.TRADE_RECORD = 0
                         return
                 else:
-                    print("✅ Trade executed successfully and handled:", trade_info, "\n")
+                    self.log_and_print("✅ Trade executed successfully and handled:", trade_info, "\n")
                     
     def execute_trade_from_signal(self, trade_info):
         self.CURRENCY = trade_info["currencyPair"]
@@ -234,24 +238,24 @@ class TradingBot:
         current_time = datetime.now().strftime('%H:%M')
         one_minute_before_trade_time = (current_time.split(":")[0] + ":") + (("0" + str((int(current_time.split(":")[1])+1))) if len(str((int(current_time.split(":")[1])+1))) == 1 else str((int(current_time.split(":")[1])+1)))
         if current_time == local_trade_time or current_time == one_minute_before_trade_time:
-            print("Signal Recieved : ", trade_info, "\n")
+            self.log_and_print("Signal Recieved : ", trade_info, "\n")
             
             if self.CURRENCY == current_symbol.text:
                 time.sleep(2)
-                print(f"Same currency : {self.CURRENCY}\n")
+                self.log_and_print(f"Same currency : {self.CURRENCY}\n")
                 self.execute_trade(trade_info)
                 return
                 
             if self.CURRENCY != current_symbol.text:
-                print(f"Changing currency : {current_symbol.text} --> {self.CURRENCY}\n")
+                self.log_and_print(f"Changing currency : {current_symbol.text} --> {self.CURRENCY}\n")
                 state_currency = self.change_currency()
                 if state_currency == True:
-                    print(f"Currency changed : {self.CURRENCY}\n")
+                    self.log_and_print(f"Currency changed : {self.CURRENCY}\n")
                     time.sleep(2)
                     self.execute_trade(trade_info)
                     return
                 else:
-                    print(f"Currency not found : {self.CURRENCY}\n")
+                    self.log_and_print(f"Currency not found : {self.CURRENCY}\n")
                     time.sleep(2)
                     return
     
@@ -271,19 +275,19 @@ class TradingBot:
                 time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
                 demo_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')))
                 if demo_identifier:
-                    print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                    self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                     return
                 else:
-                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
             except:
                 try:
                     demo_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')))
                     if demo_identifier:
-                        print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                        self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                         return
                 except:
-                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
                     
         elif TRADING_ACCOUNT.lower() == "real":
@@ -293,19 +297,19 @@ class TradingBot:
                 time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
                 real_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')))
                 if real_identifier:
-                    print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                    self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                     return
                 else:
-                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
             except:
                 try:
                     real_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')))
                     if real_identifier:
-                        print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                        self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                         return
                 except:
-                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
         else:
             return
@@ -316,11 +320,11 @@ class TradingBot:
         self.wait = WebDriverWait(self.driver, 10)
     
     def main(self):
-        print("POCKET BOT LIVE...\n")
+        self.log_and_print("POCKET BOT LIVE...\n")
         start_time = time.time()
         self.switch_real_or_demo()
         self.switch_to_currencies()
-        print(f"⏳ Waiting for Telegram Signals\n")
+        self.log_and_print(f"⏳ Waiting for Telegram Signals\n")
         while True:
             time.sleep(random.randint(1,2))
             try:
@@ -333,11 +337,11 @@ class TradingBot:
                         bot.execute_trade_from_signal(last_trade)
                         
                 if time.time() - start_time > random.randint(700, 900):
-                    print(f"{time.time()} Restarting driver...")
+                    self.log_and_print(f"{time.time()} Restarting driver...")
                     self.restart_driver()
                     start_time = time.time()
                     os.system('cls')
-                    print("POCKET BOT LIVE...\n")
+                    self.log_and_print("POCKET BOT LIVE...\n")
                     self.switch_to_currencies()
                     
             except NoSuchElementException as e:

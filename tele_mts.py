@@ -41,14 +41,18 @@ class TelegramBot:
     group_ids = set()
     group_signals = []
     
+    def log_and_print(self, message):
+        logger.info(message)
+        print(message)
+    
     def __init__(self):
         self.load_web_driver()
-        self.wait = WebDriverWait(self.driver, 10)
+        self.wait = WebDriverWait(self.driver, 60)
         time.sleep(3)
 
     def load_web_driver(self):
         options = Options()
-        options.add_argument('--headless=new')
+        # options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -91,7 +95,12 @@ class TelegramBot:
                     
                 if message_id not in self.group_ids:
                     self.group_ids.add(message_id)
-                    local_time = self.driver.find_element(By.XPATH, '(//span[@class="message-time"])[position() = last()]').text.strip()
+                    self.wait.until(EC.presence_of_element_located((By.XPATH, '(//span[@class="message-time"])[position() = last()]')))
+                    local_time = self.driver.execute_script("""
+                        const xpath = '(//span[@class="message-time"])[position() = last()]';
+                        const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                        return result.singleNodeValue ? result.singleNodeValue.textContent.trim() : null;
+                    """)
                     match = re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE —TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text) or re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE — TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text) or re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE —>TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text)
                     if match:
                         trade_id = hashlib.sha256(",".join([
@@ -112,7 +121,7 @@ class TelegramBot:
                             "tradeExpiration": match.group("tradeExpiration"),
                             "localTime": local_time.replace("PM", "").replace("AM", "").strip()
                         }
-                        print(f"\nSignal : {trade_info}")
+                        self.log_and_print(f"\nSignal : {trade_info}")
                         logging.info(f"\nSignal : {trade_info}")
                         self.group_signals.append(trade_info)
                         self.save2json()
@@ -124,7 +133,6 @@ class TelegramBot:
     def restart_driver(self):
         self.driver.quit()
         self.load_web_driver()
-        self.wait = WebDriverWait(self.driver, 10)
     
     def save2json(self):
         with open("./jsons/signals_mts.json", 'w', encoding='utf-8') as file:
@@ -134,9 +142,9 @@ class TelegramBot:
         group_to_target = TELEGRAM_GROUP_NAME
         try:
             self.click_on_group(group_to_target)
-            print(f"Group enter successful")
+            self.log_and_print(f"Group enter successful")
             os.system("cls")
-            print("TELEGRAM BOT LIVE...\n")
+            self.log_and_print("TELEGRAM BOT LIVE...\n")
         except Exception as e:
             logging.exception(f"main func: Error while opening group: {e}")
             exit()
@@ -151,15 +159,15 @@ class TelegramBot:
             
             time.sleep(1)
             if time.time() - start_time > random.randint(700, 900):
-                print(f"\nRestarting driver...")
+                self.log_and_print(f"\nRestarting driver...")
                 self.restart_driver()
                 try:
                     self.click_on_group(group_to_target)
-                    print(f"Group re-enter successful")
+                    self.log_and_print(f"Group re-enter successful")
                     os.system("cls")
-                    print("TELEGRAM BOT LIVE...\n")
+                    self.log_and_print("TELEGRAM BOT LIVE...\n")
                 except Exception as e:
-                    print(f"Error while reopening group: {e}")
+                    self.log_and_print(f"Error while reopening group: {e}")
                     exit()
                 start_time = time.time()
             
