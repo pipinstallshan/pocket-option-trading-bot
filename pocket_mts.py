@@ -61,7 +61,7 @@ class TradingBot:
         
     def load_web_driver(self):
         options = Options()
-        # options.add_argument('--headless=new')
+        options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -132,7 +132,7 @@ class TradingBot:
                         self.log_and_print(f"❌ Trade Lost : {last_split[4]}\n")
                         return False
                 except Exception as e:
-                    self.log_and_print(f"Exception func check_trade_result : {e}")
+                    logging.error(f"Exception func check_trade_result : {e}")
                 break
     
     def get_balance(self):
@@ -275,19 +275,19 @@ class TradingBot:
                 time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
                 demo_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')))
                 if demo_identifier:
-                    self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                    print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                     return
                 else:
-                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
             except:
                 try:
                     demo_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Demo")]')))
                     if demo_identifier:
-                        self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                        print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                         return
                 except:
-                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    logging.error(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
                     
         elif TRADING_ACCOUNT.lower() == "real":
@@ -297,19 +297,19 @@ class TradingBot:
                 time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
                 real_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')))
                 if real_identifier:
-                    self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                    print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                     return
                 else:
-                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
             except:
                 try:
                     real_identifier = self.wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="right-block js-right-block"]//div[contains(text(), "QT Real")]')))
                     if real_identifier:
-                        self.log_and_print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
+                        print(f"✅ Trading Account Switched to {TRADING_ACCOUNT} Successfully\n")
                         return
                 except:
-                    self.log_and_print(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
+                    logging.error(f"❌ Failed to switch to {TRADING_ACCOUNT} Trading Account \n")
                     exit(0)
         else:
             return
@@ -320,11 +320,11 @@ class TradingBot:
         self.wait = WebDriverWait(self.driver, 10)
     
     def main(self):
-        self.log_and_print("POCKET BOT LIVE...\n")
+        print("POCKET BOT LIVE...\n")
         start_time = time.time()
         self.switch_real_or_demo()
         self.switch_to_currencies()
-        self.log_and_print(f"⏳ Waiting for Telegram Signals\n")
+        print(f"⏳ Waiting for Telegram Signals\n")
         while True:
             time.sleep(random.randint(1,2))
             try:
@@ -337,11 +337,11 @@ class TradingBot:
                         bot.execute_trade_from_signal(last_trade)
                         
                 if time.time() - start_time > random.randint(700, 900):
-                    self.log_and_print(f"{time.time()} Restarting driver...")
+                    print(f"{time.time()} Restarting driver...")
                     self.restart_driver()
                     start_time = time.time()
                     os.system('cls')
-                    self.log_and_print("POCKET BOT LIVE...\n")
+                    print("POCKET BOT LIVE...\n")
                     self.switch_to_currencies()
                     
             except NoSuchElementException as e:
@@ -349,6 +349,8 @@ class TradingBot:
                 continue
             except TimeoutException as e:
                 logging.error(f"Timeout during trade execution main : {e}")
+                continue
+            except json.JSONDecodeError as e:
                 continue
             except Exception as e:
                 logging.exception(f"Error during trade execution main : {e}")
