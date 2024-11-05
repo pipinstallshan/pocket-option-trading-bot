@@ -52,7 +52,7 @@ class TelegramBot:
 
     def load_web_driver(self):
         options = Options()
-        options.add_argument('--headless=new')
+        # options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -131,8 +131,16 @@ class TelegramBot:
             logging.exception(f"get_messages func: Error while getting message: {e}")
 
     def restart_driver(self):
-        self.driver.quit()
-        self.load_web_driver()
+        self.driver.execute_script("window.open('');")
+        new_window = self.driver.window_handles[-1]
+        self.driver.switch_to.window(new_window)
+        original_window = self.driver.window_handles[0]
+        self.driver.switch_to.window(original_window)
+        self.driver.close()
+        self.driver.switch_to.window(new_window)
+        self.driver.maximize_window()
+        url = "https://web.telegram.org/a"
+        self.driver.get(url)
     
     def save2json(self):
         with open("./jsons/signals_mts.json", 'w', encoding='utf-8') as file:

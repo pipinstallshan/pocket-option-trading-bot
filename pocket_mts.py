@@ -61,7 +61,7 @@ class TradingBot:
         
     def load_web_driver(self):
         options = Options()
-        options.add_argument('--headless=new')
+        # options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -227,7 +227,7 @@ class TradingBot:
                         self.TRADE_RECORD = 0
                         return
                 else:
-                    self.log_and_print("✅ Trade executed successfully and handled:", trade_info, "\n")
+                    self.log_and_print(f"✅ Trade executed successfully and handled: {trade_info} \n")
                     
     def execute_trade_from_signal(self, trade_info):
         self.CURRENCY = trade_info["currencyPair"]
@@ -238,7 +238,7 @@ class TradingBot:
         current_time = datetime.now().strftime('%H:%M')
         one_minute_before_trade_time = (current_time.split(":")[0] + ":") + (("0" + str((int(current_time.split(":")[1])+1))) if len(str((int(current_time.split(":")[1])+1))) == 1 else str((int(current_time.split(":")[1])+1)))
         if current_time == local_trade_time or current_time == one_minute_before_trade_time:
-            self.log_and_print("Signal Recieved : ", trade_info, "\n")
+            self.log_and_print(f"Signal Recieved : {trade_info} \n")
             
             if self.CURRENCY == current_symbol.text:
                 time.sleep(2)
@@ -315,9 +315,16 @@ class TradingBot:
             return
     
     def restart_driver(self):
-        self.driver.quit()
-        self.load_web_driver()
-        self.wait = WebDriverWait(self.driver, 10)
+        self.driver.execute_script("window.open('');")
+        new_window = self.driver.window_handles[-1]
+        self.driver.switch_to.window(new_window)
+        original_window = self.driver.window_handles[0]
+        self.driver.switch_to.window(original_window)
+        self.driver.close()
+        self.driver.switch_to.window(new_window)
+        self.driver.maximize_window()
+        url = f'{self.BASE_URL}/en/cabinet/demo-quick-high-low/'
+        self.driver.get(url)
     
     def main(self):
         print("POCKET BOT LIVE...\n")
@@ -342,6 +349,7 @@ class TradingBot:
                     start_time = time.time()
                     os.system('cls')
                     print("POCKET BOT LIVE...\n")
+                    self.switch_real_or_demo()
                     self.switch_to_currencies()
                     
             except NoSuchElementException as e:
