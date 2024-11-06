@@ -59,7 +59,19 @@ class TradingBot:
         time.sleep(5)
         self.log_and_print("Page load timeout")
         os.system('cls')
-        
+    
+    def calculate_one_minute_times(self, local_trade_time):
+        trade_time_obj = datetime.strptime(local_trade_time, '%H:%M')
+        one_minute_before_trade_time = (trade_time_obj - timedelta(minutes=1)).strftime('%H:%M')
+        one_minute_after_trade_time = (trade_time_obj + timedelta(minutes=1)).strftime('%H:%M')
+        return one_minute_before_trade_time, local_trade_time, one_minute_after_trade_time
+
+    def check_trade_times(self, local_trade_time, current_time):
+        one_minute_before, exact_trade_time, one_minute_after = self.calculate_one_minute_times(local_trade_time)
+        if current_time == exact_trade_time or current_time == one_minute_before or current_time == one_minute_after:
+            return True
+        return False
+    
     def load_web_driver(self):
         options = Options()
         # options.add_argument('--headless=new')
@@ -237,8 +249,8 @@ class TradingBot:
         current_symbol = self.driver.find_element(By.CLASS_NAME, 'current-symbol')
         
         current_time = datetime.now().strftime('%H:%M')
-        one_minute_before_trade_time = (current_time.split(":")[0] + ":") + (("0" + str((int(current_time.split(":")[1])+1))) if len(str((int(current_time.split(":")[1])+1))) == 1 else str((int(current_time.split(":")[1])+1)))
-        if current_time == local_trade_time or current_time == one_minute_before_trade_time:
+        check_validity = self.check_trade_times(local_trade_time, current_time)
+        if check_validity:
             self.log_and_print(f"Signal Recieved : {trade_info} \n")
             
             if self.CURRENCY == current_symbol.text:
@@ -259,6 +271,8 @@ class TradingBot:
                     self.log_and_print(f"Currency not found : {self.CURRENCY}\n")
                     time.sleep(2)
                     return
+        else:
+            return
     
     def switch_to_currencies(self):
         self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol'))).click()
