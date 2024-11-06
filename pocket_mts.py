@@ -245,13 +245,12 @@ class TradingBot:
     def execute_trade_from_signal(self, trade_info):
         self.CURRENCY = trade_info["currencyPair"]
         local_trade_time = trade_info["localTime"]
-        self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol')))
-        current_symbol = self.driver.find_element(By.CLASS_NAME, 'current-symbol')
-        
         current_time = datetime.now().strftime('%H:%M')
         check_validity = self.check_trade_times(local_trade_time, current_time)
         if check_validity:
             self.log_and_print(f"Signal Recieved : {trade_info} \n")
+            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol')))
+            current_symbol = self.driver.find_element(By.CLASS_NAME, 'current-symbol')
             
             if self.CURRENCY == current_symbol.text:
                 time.sleep(2)
