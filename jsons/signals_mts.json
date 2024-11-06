@@ -1,79 +1,13 @@
 [
     {
-        "tradeId": "0e75b89076e7e831d7a39e1f5b919479b8e0171de6f990f1e9d74570f8a4cfa1",
-        "messageId": "35805",
-        "currencyPair": "USD/BRL",
+        "tradeId": "32ff5228f2fcc289766a6c787b105e326bd66b0451a9628466c543c1150fd12d",
+        "messageId": "35833",
+        "currencyPair": "GBP/JPY",
         "action": "PUT",
-        "tradeExecution": "00:15",
-        "galeOne": "00:20",
-        "galeTwo": "00:25",
-        "tradeExpiration": "00:30",
-        "localTime": "08:13"
-    },
-    {
-        "tradeId": "238f5aa128f83c47af11b9d496eedef31ac40deece8bc6350d73b1509bfe3544",
-        "messageId": "35808",
-        "currencyPair": "USD/BRL",
-        "action": "PUT",
-        "tradeExecution": "00:25",
-        "galeOne": "00:30",
-        "galeTwo": "00:35",
-        "tradeExpiration": "00:40",
-        "localTime": "08:23"
-    },
-    {
-        "tradeId": "238f5aa128f83c47af11b9d496eedef31ac40deece8bc6350d73b1509bfe3544",
-        "messageId": "35810",
-        "currencyPair": "USD/BRL",
-        "action": "PUT",
-        "tradeExecution": "00:25",
-        "galeOne": "00:30",
-        "galeTwo": "00:35",
-        "tradeExpiration": "00:40",
-        "localTime": "08:43"
-    },
-    {
-        "tradeId": "ec1a9510448e6cbe92aa39fb92bf96b14bf94b639147f85044b8e4534d718bf9",
-        "messageId": "35812",
-        "currencyPair": "GBP/USD",
-        "action": "PUT",
-        "tradeExecution": "01:10",
-        "galeOne": "01:15",
-        "galeTwo": "01:20",
-        "tradeExpiration": "01:25",
-        "localTime": "09:08"
-    },
-    {
-        "tradeId": "8f41153b10773b00a4ebc0ba67838077a82906c66f50bcc73ea41efb7cbb6af7",
-        "messageId": "35815",
-        "currencyPair": "CAD/JPY",
-        "action": "PUT",
-        "tradeExecution": "01:35",
-        "galeOne": "01:40",
-        "galeTwo": "01:45",
-        "tradeExpiration": "01:50",
-        "localTime": "09:33"
-    },
-    {
-        "tradeId": "b8e179a48a0d668458f67e5ea0a372dee69f2c0df5192d59ca3cada7303db617",
-        "messageId": "35819",
-        "currencyPair": "CAD/JPY",
-        "action": "PUT",
-        "tradeExecution": "02:05",
-        "galeOne": "02:10",
-        "galeTwo": "02:15",
-        "tradeExpiration": "02:20",
-        "localTime": "10:02"
-    },
-    {
-        "tradeId": "b85f897be4e56ba1394ab6d9e0ca23af684e2ddcafd76210463f70e36858ccf4",
-        "messageId": "35822",
-        "currencyPair": "CAD/JPY",
-        "action": "PUT",
-        "tradeExecution": "02:30",
-        "galeOne": "02:35",
-        "galeTwo": "02:40",
-        "tradeExpiration": "02:45",
-        "localTime": "10:27"
+        "tradeExecution": "09:00",
+        "galeOne": "09:05",
+        "galeTwo": "09:10",
+        "tradeExpiration": "09:15",
+        "localTime": "17:03"
     }
 ]

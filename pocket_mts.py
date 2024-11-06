@@ -27,7 +27,8 @@ TRADING_ACCOUNT = config['ACCOUNT']
 handler = RotatingFileHandler(
     './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
     maxBytes=1 * 1024 * 1024 * 1024,
-    backupCount=0 
+    backupCount=0,
+    encoding='utf-8'
 )
 
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -343,7 +344,7 @@ class TradingBot:
                         bot.TRADES_EXECUTED_ID.add(trade_id)
                         bot.execute_trade_from_signal(last_trade)
                         
-                if time.time() - start_time > random.randint(1500, 1800):
+                if time.time() - start_time > random.randint(900, 1200):
                     print(f"{time.time()} Restarting driver...")
                     self.restart_driver()
                     start_time = time.time()
@@ -351,6 +352,7 @@ class TradingBot:
                     print("POCKET BOT LIVE...\n")
                     self.switch_real_or_demo()
                     self.switch_to_currencies()
+                    print(f"⏳ Waiting for Telegram Signals\n")
                     
             except NoSuchElementException as e:
                 logging.error(f"Element not found main : {e}")

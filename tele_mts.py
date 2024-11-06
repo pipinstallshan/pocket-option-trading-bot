@@ -25,7 +25,8 @@ TELEGRAM_GROUP_NAME = config['TELEGRAM_GROUP_NAME']
 handler = RotatingFileHandler(
     './logs/TELEGRAM_MAGIC_TRADER.log', 
     maxBytes=1 * 1024 * 1024 * 1024,
-    backupCount=0 
+    backupCount=0,
+    encoding='utf-8'
 )
 
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
