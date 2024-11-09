@@ -53,7 +53,7 @@ class TelegramBot:
 
     def load_web_driver(self):
         options = Options()
-        # options.add_argument('--headless=new')
+        options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')

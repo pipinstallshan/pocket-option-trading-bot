@@ -74,7 +74,7 @@ class TradingBot:
     
     def load_web_driver(self):
         options = Options()
-        # options.add_argument('--headless=new')
+        options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -277,6 +277,9 @@ class TradingBot:
         self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol'))).click()
         time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
         self.wait.until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(), "Currencies")]'))).click()
+        time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
+        self.wait.until(EC.presence_of_element_located((By.XPATH, '//span[@class="alist__label"]'))).click()
+        time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
         self.driver.refresh()
         time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
         return
