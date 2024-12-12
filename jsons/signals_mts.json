@@ -1,13 +1,13 @@
 [
     {
-        "tradeId": "b6cb3e9e08352e636db15540cd4162c817ab6ee1ba6a7e6a3efa71b88b7beeb1",
-        "messageId": "273",
-        "currencyPair": "USD/JPY",
+        "tradeId": "bbbffa49b3e8959644b1a5709c0482a9d37af1517e099a078791ee3e14fd0ccb",
+        "messageId": "12363",
+        "currencyPair": "USD/CAD",
         "action": "CALL",
-        "tradeExecution": "18:21",
-        "galeOne": "18:22",
-        "galeTwo": "18:23",
-        "tradeExpiration": "18:24",
-        "localTime": "01:20"
+        "tradeExecution": "18:45",
+        "galeOne": "18:50",
+        "galeTwo": "18:55",
+        "tradeExpiration": "19:00",
+        "localTime": "18:41"
     }
 ]

@@ -7,6 +7,7 @@ import random
 import hashlib
 import logging
 from pathlib import Path
+from datetime import datetime
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -26,6 +27,7 @@ handler = RotatingFileHandler(
     './logs/TELEGRAM_MAGIC_TRADER.log', 
     maxBytes=1 * 1024 * 1024 * 1024,
     backupCount=0,
+    mode='w',
     encoding='utf-8'
 )
 
@@ -67,8 +69,13 @@ class TelegramBot:
     
     def click_on_group(self, group_to_target):
         try:
-            self.wait.until(EC.presence_of_element_located((By.XPATH, f'//h3[contains(text(), "{group_to_target}")]/ancestor::a')))    
-            group_name = self.driver.find_element(By.XPATH, f'//h3[contains(text(), "{group_to_target}")]/ancestor::a')
+            self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')))    
+            category_name = self.driver.find_element(By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')
+            category_name.click()
+            self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//img[@alt="{group_to_target}"]/ancestor::div[contains(@class, "status status-clickable")])[2]')))    
+            group_name = self.driver.find_element(By.XPATH, f'(//img[@alt="{group_to_target}"]/ancestor::div[contains(@class, "status status-clickable")])[2]')
+            # self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//a[@href="#-1002306409163"])[2]')))    
+            # group_name = self.driver.find_element(By.XPATH, f'(//a[@href="#-1002306409163"])[2]')
             group_name.click()
         except Exception as e:
             logging.exception(f"Exception func click_on_group : {e}")
@@ -102,8 +109,23 @@ class TelegramBot:
                         const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
                         return result.singleNodeValue ? result.singleNodeValue.textContent.trim() : null;
                     """)
-                    match = re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE —TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text) or re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE — TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text) or re.search(r'(?P<currencyPair>[A-Z]{3}/[A-Z]{3});(?P<tradeExecution>\d{2}:\d{2});(?P<action>PUT|CALL)\s*TIME TO (?P<galeOne>\d{2}:\d{2})\s*1st GALE —>TIME TO (?P<galeTwo>\d{2}:\d{2})\s*2nd GALE —>TIME TO (?P<tradeExpiration>\d{2}:\d{2})', final_text)
+                    match = re.search(r'(?P<currencyPair>[A-Z]{3}[A-Z]{3})\s*-\s*\d{1,2}M\s*(?P<action>PUT|CALL)\s*Market\s*:\s*REAL\s*Expiration\s*:\s*\d{1,2}M\s*Direction\s*:\s*(?P<direction>[A-Za-z]+)\s*Entry at\s*:(?P<tradeExecution>\d{2})\s*Entry at\s*:(?P<galeOne>\d{2})\s*Entry at\s*:(?P<galeTwo>\d{2})', final_text)
                     if match:
+                        currencyPair = match.group('currencyPair')
+                        action = match.group('action')
+                        tradeExecution = int(match.group('tradeExecution'))
+                        galeOne = int(match.group('galeOne'))
+                        galeTwo = int(match.group('galeTwo'))
+                        current_hour = datetime.now().hour
+                        galeOne_hour = current_hour if galeOne > tradeExecution else current_hour + 1
+                        galeTwo_hour = galeOne_hour if galeTwo > galeOne else galeOne_hour + 1
+                        tradeExecution_full = f"{current_hour:02d}:{tradeExecution:02d}"
+                        galeOne_full = f"{galeOne_hour % 24:02d}:{galeOne:02d}"
+                        galeTwo_full = f"{galeTwo_hour % 24:02d}:{galeTwo:02d}"
+                        expiration_minutes = (galeTwo + 5) % 60
+                        expiration_hour = galeTwo_hour + (galeTwo + 5) // 60
+                        tradeExpiration_full = f"{expiration_hour % 24:02d}:{expiration_minutes:02d}"
+
                         trade_id = hashlib.sha256(",".join([
                             match.group("currencyPair"),
                             match.group("action"),
@@ -114,13 +136,13 @@ class TelegramBot:
                         trade_info = {
                             "tradeId": trade_id,
                             "messageId": message_id,
-                            "currencyPair": match.group("currencyPair"),
-                            "action": match.group("action"),
-                            "tradeExecution": match.group("tradeExecution"),
-                            "galeOne": match.group("galeOne"),
-                            "galeTwo": match.group("galeTwo"),
-                            "tradeExpiration": match.group("tradeExpiration"),
-                            "localTime": local_time.replace("PM", "").replace("AM", "").strip()
+                            "currencyPair": f'{currencyPair[:3]}/{currencyPair[3:]}',
+                            "action": "CALL" if action == "CALL" else "PUT",
+                            "tradeExecution": tradeExecution_full,
+                            "galeOne": galeOne_full,
+                            "galeTwo": galeTwo_full,
+                            "tradeExpiration": tradeExpiration_full,
+                            "localTime": local_time.replace("PM", "").replace("AM", "").replace("edited", "").strip()
                         }
                         self.log_and_print(f"\nSignal : {trade_info}")
                         logging.info(f"\nSignal : {trade_info}")

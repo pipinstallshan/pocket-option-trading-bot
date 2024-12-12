@@ -21,13 +21,16 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 with open('config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
-TRADE_EQUITY_PERCENT = config['TRADE_EQUITY_PERCENT']
+INTITIAL_TRADE_EQUITY_PERCENT = config['INTITIAL_TRADE_EQUITY_PERCENT']
+MARTINGALE_TRADE_EQUITY_PERCENT = config['MARTINGALE_TRADE_EQUITY_PERCENT']
 TRADING_ACCOUNT = config['ACCOUNT']
+DELAY_AFTER_FAILURE = config['DELAY_AFTER_FAILURE']
 
 handler = RotatingFileHandler(
     './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
     maxBytes=1 * 1024 * 1024 * 1024,
     backupCount=0,
+    mode='w',
     encoding='utf-8'
 )
 
@@ -66,9 +69,12 @@ class TradingBot:
         one_minute_after_trade_time = (trade_time_obj + timedelta(minutes=1)).strftime('%H:%M')
         return one_minute_before_trade_time, local_trade_time, one_minute_after_trade_time
 
-    def check_trade_times(self, local_trade_time, current_time):
+    def check_trade_times(self, local_trade_time, current_time, trade_execution):
         one_minute_before, exact_trade_time, one_minute_after = self.calculate_one_minute_times(local_trade_time)
-        if current_time == exact_trade_time or current_time == one_minute_before or current_time == one_minute_after:
+        if (current_time == exact_trade_time or \
+            current_time == one_minute_before or \
+                current_time == one_minute_after) \
+                    and (int((trade_execution.replace(":", "")).strip()) >= int((local_trade_time.replace(":", "")).strip())):
             return True
         return False
     
@@ -135,13 +141,13 @@ class TradingBot:
                 if closed_trades_currencies:
                     last_split = closed_trades_currencies[0].text.split('\n')
                 try:
-                    if '$0' not in last_split[4]:                                             # Win
+                    if '0' not in last_split[4]:                                             # Win
                         self.log_and_print(f"🏆 Trade Win : {last_split[4]}\n")
                         return True
-                    elif '$0' not in last_split[3]:                                           # Draw
+                    elif '0' not in last_split[3]:                                           # Draw
                         self.log_and_print(f"🆗 Trade Draw : {last_split[3]}\n")
                         return True
-                    else:                                                                       # Lose
+                    else:                                                                    # Lose
                         self.log_and_print(f"❌ Trade Lost : {last_split[4]}\n")
                         return False
                 except Exception as e:
@@ -164,13 +170,17 @@ class TradingBot:
         
         time.sleep(random.choice([0.9, 0.8, 0.6, 0.7]))
         self.log_and_print(f"💲 Trade amount set to ${str(trade_amount).strip()}\n")
+        
+        self.driver.find_element(By.CSS_SELECTOR, '#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]').click()
+        time.sleep(random.choice([0.5, 0.6, 0.5, 0.6]))
+        
         return trade_amount
     
     def wait_until_trade_time(self, trade_time):
         start_time = time.time()
         while True:
             time.sleep(0.2)
-            current_time = (datetime.utcnow() - timedelta(hours=3)).strftime('%H:%M')
+            current_time = datetime.now().strftime('%H:%M')
             self.log_and_print(f"⏳ Waiting for execution [CURRENT TIME: {current_time}] [TARGET TIME: {trade_time}]\n")
             
             if current_time == trade_time:
@@ -183,13 +193,13 @@ class TradingBot:
 
     def execute_trade_action(self):
         try:
-            if self.ACTION == "buy" or "call":
-                self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-call')))
-                self.driver.find_element(By.CLASS_NAME, 'btn-call').click()
+            if self.ACTION == "buy" or self.ACTION == "call":
+                self.wait.until(EC.visibility_of_element_located((By.XPATH, '//a[@class="btn btn-call"]')))
+                self.driver.find_element(By.XPATH, '//a[@class="btn btn-call"]').click()
                 self.log_and_print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            elif self.ACTION == "sell" or "put":
-                self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-put')))
-                self.driver.find_element(By.CLASS_NAME, 'btn-put').click()
+            elif self.ACTION == "sell" or self.ACTION == "put":
+                self.wait.until(EC.visibility_of_element_located((By.XPATH, '//a[@class="btn btn-put"]')))
+                self.driver.find_element(By.XPATH, '//a[@class="btn btn-put"]').click()
                 self.log_and_print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         except NoSuchElementException as e:
@@ -208,7 +218,7 @@ class TradingBot:
                 if self.TRADE_RECORD <= 2:
                     self.TRADE_RECORD += 1
                     self.log_and_print(f"❌ Trade failed. Attempting Martingale strategy - Record: {self.TRADE_RECORD}\n")
-                    self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(self.CURRENT_TRADE_AMOUNT * 2)
+                    self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(self.CURRENT_TRADE_AMOUNT * MARTINGALE_TRADE_EQUITY_PERCENT)
                 return False
         
         except NoSuchElementException as e:
@@ -225,7 +235,7 @@ class TradingBot:
             if self.wait_until_trade_time(trade_time) is not None:
                 self.ACTION = trade_info['action'].lower()
                 
-                initial_trade_amount = max(1, math.floor(int(self.get_balance()) * float(f"{0.0}{TRADE_EQUITY_PERCENT}")))
+                initial_trade_amount = round(float(self.get_balance() * float(f"{0.0}{INTITIAL_TRADE_EQUITY_PERCENT}")), 2)
                 if self.TRADE_RECORD == 0:
                     self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(initial_trade_amount)
                 
@@ -238,6 +248,8 @@ class TradingBot:
                     else:
                         self.log_and_print("⚠️ Maximum retries reached.\n")
                         self.TRADE_RECORD = 0
+                        self.log_and_print(f"⚠️ Trading will continue after {DELAY_AFTER_FAILURE} minutes.\n")
+                        time.sleep(DELAY_AFTER_FAILURE * 60)
                         return
                 else:
                     self.log_and_print(f"✅ Trade executed successfully and handled: {trade_info} \n")
@@ -245,8 +257,10 @@ class TradingBot:
     def execute_trade_from_signal(self, trade_info):
         self.CURRENCY = trade_info["currencyPair"]
         local_trade_time = trade_info["localTime"]
+        trade_execution = trade_info['tradeExecution']
         current_time = datetime.now().strftime('%H:%M')
-        check_validity = self.check_trade_times(local_trade_time, current_time)
+
+        check_validity = self.check_trade_times(local_trade_time, current_time, trade_execution)
         if check_validity:
             self.log_and_print(f"Signal Recieved : {trade_info} \n")
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol')))

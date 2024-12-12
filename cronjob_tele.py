@@ -3,19 +3,25 @@ import time
 import pytz
 import psutil
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 
-morning_start = "07:00"
-morning_end = "11:30"
-afternoon_start = "16:00"
-afternoon_end = "23:00"
+morning_start = "08:00"
+morning_end = "12:00"
+afternoon_start = "14:00"
+afternoon_end = "18:00"
+evening_start = "20:00"
+evening_end = "00:00"
 
-pk_tz = pytz.timezone('Asia/Karachi')
+pk_tz = pytz.timezone('Europe/London')
 
 def get_time_range(start, end):
     today = datetime.now(pk_tz).date()
     start_time = pk_tz.localize(datetime.strptime(f"{today} {start}", "%Y-%m-%d %H:%M"))
-    end_time = pk_tz.localize(datetime.strptime(f"{today} {end}", "%Y-%m-%d %H:%M"))
+    if end == "00:00":
+        tomorrow = today + timedelta(days=1)
+        end_time = pk_tz.localize(datetime.strptime(f"{tomorrow} 00:00", "%Y-%m-%d %H:%M"))
+    else:
+        end_time = pk_tz.localize(datetime.strptime(f"{today} {end}", "%Y-%m-%d %H:%M"))
     return start_time, end_time
 
 def is_within_timeframe(start, end):
@@ -52,11 +58,17 @@ def main():
         print("Cronjob Telegram Live...")
         morning_start_time, morning_end_time = get_time_range(morning_start, morning_end)
         afternoon_start_time, afternoon_end_time = get_time_range(afternoon_start, afternoon_end)
+        evening_start_time, evening_end_time = get_time_range(evening_start, evening_end)
 
-        if is_within_timeframe(morning_start_time, morning_end_time) or is_within_timeframe(afternoon_start_time, afternoon_end_time):
+        if (is_within_timeframe(morning_start_time, morning_end_time) or
+            is_within_timeframe(afternoon_start_time, afternoon_end_time) or
+            is_within_timeframe(evening_start_time, evening_end_time)):
+            
             process = subprocess.Popen(["python", "tele_mts.py"])
 
-            while is_within_timeframe(morning_start_time, morning_end_time) or is_within_timeframe(afternoon_start_time, afternoon_end_time):
+            while (is_within_timeframe(morning_start_time, morning_end_time) or
+                   is_within_timeframe(afternoon_start_time, afternoon_end_time) or
+                   is_within_timeframe(evening_start_time, evening_end_time)):
                 time.sleep(60)
 
             process.terminate()
