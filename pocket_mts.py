@@ -80,7 +80,7 @@ class TradingBot:
     
     def load_web_driver(self):
         options = Options()
-        options.add_argument('--headless=new')
+        # options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -155,13 +155,13 @@ class TradingBot:
                 break
     
     def get_balance(self):
-        return int(float(self.driver.find_element(By.XPATH, '//header//span[contains(@class, "js-balance")]').text.replace(",", "").strip()))
+        return round(float(self.driver.find_element(By.XPATH, '//header//span[contains(@class, "js-balance")]').text.replace(",", "").strip()), 2)
     
     def set_trade_amount(self, trade_amount):
         self.driver.find_element(By.CSS_SELECTOR, '#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]').click()
         time.sleep(random.choice([0.5, 0.4, 0.3, 0.6]))
         
-        for __ in range(0, 5):
+        for __ in range(0, 10):
             self.driver.find_element(By.XPATH, '//div[@class="virtual-keyboard__col"][position() = last()]').click()
         
         for digit in str(trade_amount):
@@ -218,7 +218,8 @@ class TradingBot:
                 if self.TRADE_RECORD <= 2:
                     self.TRADE_RECORD += 1
                     self.log_and_print(f"❌ Trade failed. Attempting Martingale strategy - Record: {self.TRADE_RECORD}\n")
-                    self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(self.CURRENT_TRADE_AMOUNT * MARTINGALE_TRADE_EQUITY_PERCENT)
+                    if self.TRADE_RECORD != 3:
+                        self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(round((self.CURRENT_TRADE_AMOUNT * MARTINGALE_TRADE_EQUITY_PERCENT), 2))
                 return False
         
         except NoSuchElementException as e:
@@ -375,6 +376,19 @@ class TradingBot:
                         bot.execute_trade_from_signal(last_trade)
                         
                 if time.time() - start_time > random.randint(900, 1200):
+                    global logger, handler
+                    handler.close()
+                    logger.removeHandler(handler)
+                    handler = RotatingFileHandler(
+                        './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
+                        maxBytes=1 * 1024 * 1024 * 1024,
+                        backupCount=0,
+                        mode='w',
+                        encoding='utf-8'
+                    )
+                    handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+                    logger.addHandler(handler)
+                    
                     print(f"{time.time()} Restarting driver...")
                     self.restart_driver()
                     start_time = time.time()
