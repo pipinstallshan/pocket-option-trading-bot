@@ -23,8 +23,12 @@ with open('config.yaml', 'r') as file:
 
 TELEGRAM_GROUP_NAME = config['TELEGRAM_GROUP_NAME']
 
+log_file_path = './logs/TELEGRAM_MAGIC_TRADER.log'
+if os.path.exists(log_file_path):
+    os.remove(log_file_path)
+
 handler = RotatingFileHandler(
-    './logs/TELEGRAM_MAGIC_TRADER.log', 
+    log_file_path,
     maxBytes=1 * 1024 * 1024 * 1024,
     backupCount=0,
     mode='w',
@@ -72,10 +76,10 @@ class TelegramBot:
             self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')))    
             category_name = self.driver.find_element(By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')
             category_name.click()
-            # self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//img[@alt="{group_to_target}"]/ancestor::div[contains(@class, "status status-clickable")])[2]')))    
-            # group_name = self.driver.find_element(By.XPATH, f'(//img[@alt="{group_to_target}"]/ancestor::div[contains(@class, "status status-clickable")])[2]')
-            self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//a[@href="#-1002306409163"])[2]')))    
-            group_name = self.driver.find_element(By.XPATH, f'(//a[@href="#-1002306409163"])[2]')
+            self.wait.until(EC.presence_of_element_located((By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')))    
+            group_name = self.driver.find_element(By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')
+            # self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//a[@href="#-1002306409163"])[2]')))    
+            # group_name = self.driver.find_element(By.XPATH, f'(//a[@href="#-1002306409163"])[2]')
             group_name.click()
         except Exception as e:
             logging.exception(f"Exception func click_on_group : {e}")
@@ -193,6 +197,8 @@ class TelegramBot:
                 global logger, handler
                 handler.close()
                 logger.removeHandler(handler)
+                if os.path.exists(log_file_path):
+                    os.remove(log_file_path)
                 handler = RotatingFileHandler(
                     './logs/TELEGRAM_MAGIC_TRADER.log', 
                     maxBytes=1 * 1024 * 1024 * 1024,

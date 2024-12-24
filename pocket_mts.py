@@ -26,8 +26,12 @@ MARTINGALE_TRADE_EQUITY_PERCENT = config['MARTINGALE_TRADE_EQUITY_PERCENT']
 TRADING_ACCOUNT = config['ACCOUNT']
 DELAY_AFTER_FAILURE = config['DELAY_AFTER_FAILURE']
 
+log_file_path = './logs/POCKET_MAGIC_TRADER_SIGNALS.log'
+if os.path.exists(log_file_path):
+    os.remove(log_file_path)
+
 handler = RotatingFileHandler(
-    './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
+    log_file_path, 
     maxBytes=1 * 1024 * 1024 * 1024,
     backupCount=0,
     mode='w',
@@ -180,7 +184,7 @@ class TradingBot:
         start_time = time.time()
         while True:
             time.sleep(0.2)
-            current_time = datetime.now().strftime('%H:%M')
+            current_time = (datetime.utcnow() - timedelta(hours=3)).strftime('%H:%M')
             self.log_and_print(f"⏳ Waiting for execution [CURRENT TIME: {current_time}] [TARGET TIME: {trade_time}]\n")
             
             if current_time == trade_time:
@@ -193,19 +197,18 @@ class TradingBot:
 
     def execute_trade_action(self):
         try:
-            if self.ACTION == "buy" or self.ACTION == "call":
-                self.wait.until(EC.visibility_of_element_located((By.XPATH, '//a[@class="btn btn-call"]')))
-                self.driver.find_element(By.XPATH, '//a[@class="btn btn-call"]').click()
+            if self.ACTION == "buy" or "call":
+                self.driver.find_element(By.CLASS_NAME, 'btn-call').click()
                 self.log_and_print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            elif self.ACTION == "sell" or self.ACTION == "put":
-                self.wait.until(EC.visibility_of_element_located((By.XPATH, '//a[@class="btn btn-put"]')))
-                self.driver.find_element(By.XPATH, '//a[@class="btn btn-put"]').click()
+            elif self.ACTION == "sell" or "put":
+                self.driver.find_element(By.CLASS_NAME, 'btn-put').click()
                 self.log_and_print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         except NoSuchElementException as e:
             logging.error(f"Element not found during trade execution: {e}")
         except TimeoutException as e:
             logging.error(f"Timeout during trade execution: {e}")
+
 
     def handle_trade_result(self):
         try:
@@ -220,6 +223,7 @@ class TradingBot:
                     self.log_and_print(f"❌ Trade failed. Attempting Martingale strategy - Record: {self.TRADE_RECORD}\n")
                     if self.TRADE_RECORD != 3:
                         self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(round((self.CURRENT_TRADE_AMOUNT * MARTINGALE_TRADE_EQUITY_PERCENT), 2))
+                    return False
                 return False
         
         except NoSuchElementException as e:
@@ -233,14 +237,16 @@ class TradingBot:
         trade_time = trade_info.get(time_field)
 
         if trade_time:
-            if self.wait_until_trade_time(trade_time) is not None:
+            if self.wait_until_trade_time(trade_time):
                 self.ACTION = trade_info['action'].lower()
                 
                 initial_trade_amount = round(float(self.get_balance() * float(f"{0.0}{INTITIAL_TRADE_EQUITY_PERCENT}")), 2)
                 if self.TRADE_RECORD == 0:
                     self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(initial_trade_amount)
                 
+                print("Going in")
                 self.execute_trade_action()
+                print("Got out")
                 
                 if self.handle_trade_result() is False:
                     if self.TRADE_RECORD <= 2:
@@ -254,6 +260,10 @@ class TradingBot:
                         return
                 else:
                     self.log_and_print(f"✅ Trade executed successfully and handled: {trade_info} \n")
+            else:
+                return
+        else:
+            return
                     
     def execute_trade_from_signal(self, trade_info):
         self.CURRENCY = trade_info["currencyPair"]
@@ -375,10 +385,12 @@ class TradingBot:
                         bot.TRADES_EXECUTED_ID.add(trade_id)
                         bot.execute_trade_from_signal(last_trade)
                         
-                if time.time() - start_time > random.randint(900, 1200):
+                if time.time() - start_time > random.randint(1800, 2700):
                     global logger, handler
                     handler.close()
                     logger.removeHandler(handler)
+                    if os.path.exists(log_file_path):
+                        os.remove(log_file_path)
                     handler = RotatingFileHandler(
                         './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
                         maxBytes=1 * 1024 * 1024 * 1024,
