@@ -27,21 +27,14 @@ log_file_path = './logs/TELEGRAM_MAGIC_TRADER.log'
 if os.path.exists(log_file_path):
     os.remove(log_file_path)
 
-handler = RotatingFileHandler(
-    log_file_path,
-    maxBytes=1 * 1024 * 1024 * 1024,
-    backupCount=0,
-    mode='w',
-    encoding='utf-8'
+logging.basicConfig(
+    filename=log_file_path,
+    filemode='w',
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO
 )
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-handler.setLevel(logging.INFO)
-
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(handler)
 
 class TelegramBot:
     driver = None
@@ -59,7 +52,7 @@ class TelegramBot:
 
     def load_web_driver(self):
         options = Options()
-        # options.add_argument('--headless=new')
+        options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -76,10 +69,10 @@ class TelegramBot:
             self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')))    
             category_name = self.driver.find_element(By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')
             category_name.click()
-            self.wait.until(EC.presence_of_element_located((By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')))    
-            group_name = self.driver.find_element(By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')
-            # self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//a[@href="#-1002306409163"])[2]')))    
-            # group_name = self.driver.find_element(By.XPATH, f'(//a[@href="#-1002306409163"])[2]')
+            # self.wait.until(EC.presence_of_element_located((By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')))    
+            # group_name = self.driver.find_element(By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')
+            self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//a[@href="#-1002306409163"])[2]')))    
+            group_name = self.driver.find_element(By.XPATH, f'(//a[@href="#-1002306409163"])[2]')
             group_name.click()
         except Exception as e:
             logging.exception(f"Exception func click_on_group : {e}")
@@ -193,22 +186,7 @@ class TelegramBot:
             # ***************************************************************************************
             
             time.sleep(1)
-            if time.time() - start_time > random.randint(700, 900):
-                global logger, handler
-                handler.close()
-                logger.removeHandler(handler)
-                if os.path.exists(log_file_path):
-                    os.remove(log_file_path)
-                handler = RotatingFileHandler(
-                    './logs/TELEGRAM_MAGIC_TRADER.log', 
-                    maxBytes=1 * 1024 * 1024 * 1024,
-                    backupCount=0,
-                    mode='w',
-                    encoding='utf-8'
-                )
-                handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-                logger.addHandler(handler)
-                
+            if time.time() - start_time > random.randint(30, 60):
                 self.log_and_print(f"\nRestarting driver...")
                 self.restart_driver()
                 try:

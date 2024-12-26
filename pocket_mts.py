@@ -30,21 +30,14 @@ log_file_path = './logs/POCKET_MAGIC_TRADER_SIGNALS.log'
 if os.path.exists(log_file_path):
     os.remove(log_file_path)
 
-handler = RotatingFileHandler(
-    log_file_path, 
-    maxBytes=1 * 1024 * 1024 * 1024,
-    backupCount=0,
-    mode='w',
-    encoding='utf-8'
+logging.basicConfig(
+    filename=log_file_path,
+    filemode='w',
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO
 )
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-handler.setLevel(logging.INFO)
-
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(handler)
 
 class TradingBot:
     BASE_URL = 'https://pocketoption.com'
@@ -84,7 +77,7 @@ class TradingBot:
     
     def load_web_driver(self):
         options = Options()
-        # options.add_argument('--headless=new')
+        options.add_argument('--headless=new')
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
         options.add_argument('--ignore-ssl-errors')
         options.add_argument('--ignore-certificate-errors')
@@ -138,21 +131,21 @@ class TradingBot:
         except:
             pass
         
-        previous_trade_currencies = self.driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
+        previous_trade_currencies = self.driver.find_elements(By.XPATH, '//div[@class="deals-list__item"]//div[contains(@class, "deals-list__item")]/div[@class="item-row"][2]')
         while True:
-            closed_trades_currencies = self.driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
+            closed_trades_currencies = self.driver.find_elements(By.XPATH, '//div[@class="deals-list__item"]//div[contains(@class, "deals-list__item")]/div[@class="item-row"][2]')
             if len(closed_trades_currencies) > len(previous_trade_currencies):
                 if closed_trades_currencies:
                     last_split = closed_trades_currencies[0].text.split('\n')
                 try:
-                    if '0' not in last_split[4]:                                             # Win
-                        self.log_and_print(f"🏆 Trade Win : {last_split[4]}\n")
+                    if '+' in last_split[2]:                                                 # Win
+                        self.log_and_print(f"🏆 Trade Win : {last_split[2]}\n")
                         return True
-                    elif '0' not in last_split[3]:                                           # Draw
-                        self.log_and_print(f"🆗 Trade Draw : {last_split[3]}\n")
+                    elif '0' not in last_split[1]:                                           # Draw
+                        self.log_and_print(f"🆗 Trade Draw : {last_split[1]}\n")
                         return True
                     else:                                                                    # Lose
-                        self.log_and_print(f"❌ Trade Lost : {last_split[4]}\n")
+                        self.log_and_print(f"❌ Trade Lost : {last_split[1]}\n")
                         return False
                 except Exception as e:
                     logging.error(f"Exception func check_trade_result : {e}")
@@ -184,10 +177,12 @@ class TradingBot:
         start_time = time.time()
         while True:
             time.sleep(0.2)
-            current_time = (datetime.utcnow() - timedelta(hours=3)).strftime('%H:%M')
+            current_time = datetime.now().strftime('%H:%M')
             self.log_and_print(f"⏳ Waiting for execution [CURRENT TIME: {current_time}] [TARGET TIME: {trade_time}]\n")
             
-            if current_time == trade_time:
+            if self.TRADE_RECORD > 0:
+                return True
+            elif current_time == trade_time:
                 return True
             elif datetime.strptime(current_time, "%H:%M") > datetime.strptime(trade_time, "%H:%M"):
                 return False
@@ -197,10 +192,10 @@ class TradingBot:
 
     def execute_trade_action(self):
         try:
-            if self.ACTION == "buy" or "call":
+            if self.ACTION == "buy" or self.ACTION == "call":
                 self.driver.find_element(By.CLASS_NAME, 'btn-call').click()
                 self.log_and_print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            elif self.ACTION == "sell" or "put":
+            elif self.ACTION == "sell" or self.ACTION == "put":
                 self.driver.find_element(By.CLASS_NAME, 'btn-put').click()
                 self.log_and_print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         
@@ -244,9 +239,7 @@ class TradingBot:
                 if self.TRADE_RECORD == 0:
                     self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(initial_trade_amount)
                 
-                print("Going in")
                 self.execute_trade_action()
-                print("Got out")
                 
                 if self.handle_trade_result() is False:
                     if self.TRADE_RECORD <= 2:
@@ -287,10 +280,16 @@ class TradingBot:
                 self.log_and_print(f"Changing currency : {current_symbol.text} --> {self.CURRENCY}\n")
                 state_currency = self.change_currency()
                 if state_currency == True:
-                    self.log_and_print(f"Currency changed : {self.CURRENCY}\n")
-                    time.sleep(2)
-                    self.execute_trade(trade_info)
-                    return
+                    current_symbol = self.driver.find_element(By.CLASS_NAME, 'current-symbol')
+                    if self.CURRENCY == current_symbol.text:
+                        self.log_and_print(f"Currency changed : {self.CURRENCY}\n")
+                        time.sleep(2)
+                        self.execute_trade(trade_info)
+                        return
+                    else:
+                        self.log_and_print(f"Currency not found : {self.CURRENCY}\n")
+                        time.sleep(2)
+                        return
                 else:
                     self.log_and_print(f"Currency not found : {self.CURRENCY}\n")
                     time.sleep(2)
@@ -300,11 +299,11 @@ class TradingBot:
     
     def switch_to_currencies(self):
         self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'current-symbol'))).click()
-        time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
+        time.sleep(random.choice([0.7, 0.8, 0.6, 0.7]))
         self.wait.until(EC.presence_of_element_located((By.XPATH, '//span[contains(text(), "Currencies")]'))).click()
-        time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
+        time.sleep(random.choice([0.7, 0.8, 0.6, 0.7]))
         self.wait.until(EC.presence_of_element_located((By.XPATH, '//span[@class="alist__label"]'))).click()
-        time.sleep(random.choice([0.5, 0.8, 0.6, 0.7]))
+        time.sleep(random.choice([1.7, 1.8, 1.6, 1.7]))
         self.driver.refresh()
         time.sleep(random.choice([2.3, 2.2, 2.1, 2.0]))
         return
@@ -385,23 +384,9 @@ class TradingBot:
                         bot.TRADES_EXECUTED_ID.add(trade_id)
                         bot.execute_trade_from_signal(last_trade)
                         
-                if time.time() - start_time > random.randint(1800, 2700):
-                    global logger, handler
-                    handler.close()
-                    logger.removeHandler(handler)
-                    if os.path.exists(log_file_path):
-                        os.remove(log_file_path)
-                    handler = RotatingFileHandler(
-                        './logs/POCKET_MAGIC_TRADER_SIGNALS.log', 
-                        maxBytes=1 * 1024 * 1024 * 1024,
-                        backupCount=0,
-                        mode='w',
-                        encoding='utf-8'
-                    )
-                    handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-                    logger.addHandler(handler)
-                    
+                if time.time() - start_time > random.randint(30, 60):
                     print(f"{time.time()} Restarting driver...")
+                    self.ACTION = None
                     self.restart_driver()
                     start_time = time.time()
                     os.system('cls')
