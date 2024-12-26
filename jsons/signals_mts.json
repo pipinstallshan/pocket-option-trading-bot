@@ -1,24 +1,13 @@
 [
     {
-        "tradeId": "3ea4fb45d6a8a411b35b254b2377fb9d93f73c2f70a83bb706d6ff3449e9bd19",
-        "messageId": "173",
-        "currencyPair": "AUD/USD",
-        "action": "PUT",
-        "tradeExecution": "17:02",
-        "galeOne": "17:03",
-        "galeTwo": "17:04",
-        "tradeExpiration": "17:09",
-        "localTime": "17:01"
-    },
-    {
-        "tradeId": "12880ce7358924fa1a7e87777c26394586ca58f651727caf37efd35ea5800bf8",
-        "messageId": "174",
-        "currencyPair": "AUD/USD",
-        "action": "PUT",
-        "tradeExecution": "17:13",
-        "galeOne": "17:14",
-        "galeTwo": "17:15",
-        "tradeExpiration": "17:20",
-        "localTime": "17:12"
+        "tradeId": "47e130b7ca0719295b1a49ceca53b2a21c5dab7011d36c920496379fa54ecbbc",
+        "messageId": "12847",
+        "currencyPair": "EUR/USD",
+        "action": "CALL",
+        "tradeExecution": "17:15",
+        "galeOne": "17:20",
+        "galeTwo": "17:25",
+        "tradeExpiration": "17:30",
+        "localTime": "16:12"
     }
 ]

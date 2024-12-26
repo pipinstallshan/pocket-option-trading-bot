@@ -384,7 +384,7 @@ class TradingBot:
                         bot.TRADES_EXECUTED_ID.add(trade_id)
                         bot.execute_trade_from_signal(last_trade)
                         
-                if time.time() - start_time > random.randint(30, 60):
+                if time.time() - start_time > random.randint(200, 300):
                     print(f"{time.time()} Restarting driver...")
                     self.ACTION = None
                     self.restart_driver()
