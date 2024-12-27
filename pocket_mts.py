@@ -194,10 +194,10 @@ class TradingBot:
         try:
             if self.ACTION == "buy" or self.ACTION == "call":
                 self.driver.find_element(By.CLASS_NAME, 'btn-call').click()
-                self.log_and_print(f"📈 Executed Buy at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                self.log_and_print(f"📈 Executed Call at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             elif self.ACTION == "sell" or self.ACTION == "put":
                 self.driver.find_element(By.CLASS_NAME, 'btn-put').click()
-                self.log_and_print(f"📉 Executed Sell at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                self.log_and_print(f"📉 Executed Put at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         
         except NoSuchElementException as e:
             logging.error(f"Element not found during trade execution: {e}")
