@@ -232,15 +232,16 @@ class TradingBot:
         trade_time = trade_info.get(time_field)
 
         if trade_time:
+            self.ACTION = trade_info['action'].lower()
+
+            initial_trade_amount = round(float(self.get_balance() * float(f"{0.0}{INTITIAL_TRADE_EQUITY_PERCENT}")), 2)
+            if self.TRADE_RECORD == 0:
+                self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(initial_trade_amount)
+                
             if self.wait_until_trade_time(trade_time):
-                self.ACTION = trade_info['action'].lower()
-                
-                initial_trade_amount = round(float(self.get_balance() * float(f"{0.0}{INTITIAL_TRADE_EQUITY_PERCENT}")), 2)
-                if self.TRADE_RECORD == 0:
-                    self.CURRENT_TRADE_AMOUNT = self.set_trade_amount(initial_trade_amount)
-                
+
                 self.execute_trade_action()
-                
+
                 if self.handle_trade_result() is False:
                     if self.TRADE_RECORD <= 2:
                         self.log_and_print(f"🔄 Retrying trade with doubled amount. Attempt: {self.TRADE_RECORD}\n")
