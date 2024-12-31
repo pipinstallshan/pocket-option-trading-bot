@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import pytz
 import json
@@ -59,6 +60,14 @@ class TradingBot:
         time.sleep(5)
         self.log_and_print("Page load timeout")
         os.system('cls')
+    
+    def is_driver_active(self):
+        try:
+            if self.driver.title:
+                return True
+            return False
+        except:
+            return False
     
     def calculate_one_minute_times(self, local_trade_time):
         trade_time_obj = datetime.strptime(local_trade_time, '%H:%M')
@@ -357,16 +366,20 @@ class TradingBot:
             return
     
     def restart_driver(self):
-        self.driver.execute_script("window.open('');")
-        new_window = self.driver.window_handles[-1]
-        self.driver.switch_to.window(new_window)
-        original_window = self.driver.window_handles[0]
-        self.driver.switch_to.window(original_window)
-        self.driver.close()
-        self.driver.switch_to.window(new_window)
-        self.driver.maximize_window()
-        url = f'{self.BASE_URL}/en/cabinet/demo-quick-high-low/'
-        self.driver.get(url)
+        if self.is_driver_active():
+            self.driver.execute_script("window.open('');")
+            new_window = self.driver.window_handles[-1]
+            self.driver.switch_to.window(new_window)
+            original_window = self.driver.window_handles[0]
+            self.driver.switch_to.window(original_window)
+            self.driver.close()
+            self.driver.switch_to.window(new_window)
+            self.driver.maximize_window()
+            url = f'{self.BASE_URL}/en/cabinet/demo-quick-high-low/'
+            self.driver.get(url)
+        else:
+            self.driver.quit()
+            os.execv(sys.executable, ['python'] + sys.argv)
     
     def main(self):
         print("POCKET BOT LIVE...\n")

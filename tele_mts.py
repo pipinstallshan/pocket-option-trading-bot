@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import time
 import json
 import yaml
@@ -49,6 +50,14 @@ class TelegramBot:
         self.load_web_driver()
         self.wait = WebDriverWait(self.driver, 60)
         time.sleep(3)
+        
+    def is_driver_active(self):
+        try:
+            if self.driver.title:
+                return True
+            return False
+        except:
+            return False
 
     def load_web_driver(self):
         options = Options()
@@ -64,19 +73,19 @@ class TelegramBot:
         url = "https://web.telegram.org/a"
         self.driver.get(url)
     
-    def click_on_group(self, group_to_target):
+    def click_on_group(self, TELEGRAM_GROUP_NAME):
         try:
             self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')))    
             category_name = self.driver.find_element(By.XPATH, f'(//span[contains(text(), "JD")])[1]/parent::div')
             category_name.click()
-            self.wait.until(EC.presence_of_element_located((By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')))    
-            group_name = self.driver.find_element(By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{group_to_target}")]/ancestor::div[@class="info"]/parent::a')
+            self.wait.until(EC.presence_of_element_located((By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{TELEGRAM_GROUP_NAME}")]/ancestor::div[@class="info"]/parent::a')))    
+            group_name = self.driver.find_element(By.XPATH, f'//div[@class="chat-list custom-scroll Transition_slide Transition_slide-active"]//h3[contains(text(), "{TELEGRAM_GROUP_NAME}")]/ancestor::div[@class="info"]/parent::a')
             # self.wait.until(EC.presence_of_element_located((By.XPATH, f'(//a[@href="#-1002306409163"])[2]')))    
             # group_name = self.driver.find_element(By.XPATH, f'(//a[@href="#-1002306409163"])[2]')
             group_name.click()
         except Exception as e:
             logging.exception(f"Exception func click_on_group : {e}")
-            self.click_on_group(group_to_target)
+            self.click_on_group(TELEGRAM_GROUP_NAME)
         
     def get_messages(self):
         try:
@@ -151,25 +160,28 @@ class TelegramBot:
             logging.exception(f"get_messages func: Error while getting message: {e}")
 
     def restart_driver(self):
-        self.driver.execute_script("window.open('');")
-        new_window = self.driver.window_handles[-1]
-        self.driver.switch_to.window(new_window)
-        original_window = self.driver.window_handles[0]
-        self.driver.switch_to.window(original_window)
-        self.driver.close()
-        self.driver.switch_to.window(new_window)
-        self.driver.maximize_window()
-        url = "https://web.telegram.org/a"
-        self.driver.get(url)
+        if self.is_driver_active():
+            self.driver.execute_script("window.open('');")
+            new_window = self.driver.window_handles[-1]
+            self.driver.switch_to.window(new_window)
+            original_window = self.driver.window_handles[0]
+            self.driver.switch_to.window(original_window)
+            self.driver.close()
+            self.driver.switch_to.window(new_window)
+            self.driver.maximize_window()
+            url = "https://web.telegram.org/a"
+            self.driver.get(url)
+        else:
+            self.driver.quit()
+            os.execv(sys.executable, ['python'] + sys.argv)
     
     def save2json(self):
         with open("./jsons/signals_mts.json", 'w', encoding='utf-8') as file:
             json.dump(self.group_signals, file, indent=4, ensure_ascii=False)
     
     def main(self):
-        group_to_target = TELEGRAM_GROUP_NAME
         try:
-            self.click_on_group(group_to_target)
+            self.click_on_group(TELEGRAM_GROUP_NAME)
             self.log_and_print(f"Group enter successful")
             os.system("cls")
             self.log_and_print("TELEGRAM BOT LIVE...\n")
@@ -182,7 +194,7 @@ class TelegramBot:
             time.sleep(random.randint(1,2))
             self.get_messages()
             
-            # I use this code to restart so that the process could refresh if it got stuck somewhere
+            # I use this code to restart so that the process could refresh if it gets stuck somewhere
             # ***************************************************************************************
             
             time.sleep(1)
@@ -190,7 +202,7 @@ class TelegramBot:
                 self.log_and_print(f"\nRestarting driver...")
                 self.restart_driver()
                 try:
-                    self.click_on_group(group_to_target)
+                    self.click_on_group(TELEGRAM_GROUP_NAME)
                     self.log_and_print(f"Group re-enter successful")
                     os.system("cls")
                     self.log_and_print("TELEGRAM BOT LIVE...\n")
